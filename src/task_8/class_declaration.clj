@@ -1,8 +1,8 @@
 (ns task-8.class_declaration
-  (:gen-class)
   "In this namespace we implemented all methods and macroses to create classes
 
-   And so on...")
+   And so on..."
+  (:gen-class))
 
 (use 'clojure.set)
 
@@ -34,6 +34,11 @@
      (dosync (alter classes-hierarchy assoc
                ~name {::super super#
                       ::fields fields#})))))
+
+(defn own-class
+  "This function indicates a super"
+  [class]
+  ((classes-hierarchy class) ::class))
 
 (defn super-class
   "This function indicates a super"
@@ -70,10 +75,14 @@
     (assert (contains? @state field))
     (dosync (alter state assoc field new_value))))
 
-(defn instance-class [instance]
+(defn instance-class
+  "This... TODO"
+  [instance]
   (instance ::class))
 
-(defn is-instance? [obj]
+(defn is-instance?
+  "This... TODO"
+  [obj]
   (and (map? obj) (contains? obj ::class)))
 
 (defmacro def-command
@@ -81,7 +90,7 @@
   [name]
   `(let [vtable# (ref {})]
      (defn ~name [obj# & args#]
-       (if (is_instance? obj#)
+       (if (is-instance? obj#)
          (apply perform-effective-command
            (concat (list @vtable# (instance-class obj#) obj#) args#))
          (dosync (alter vtable# assoc (first obj#) (second obj#)))))))
@@ -91,9 +100,8 @@
   [method_name class method_arguments & method_body]
   `(~method_name [~class (fn ~method_arguments ~@method_body)]))
 
-(def
-  "This is... TODO"
-  ^:dynamic super nil)
+;; what is it?
+(def ^:dynamic super nil)
 
 (defn perform-effective-command
   "This... TODO"

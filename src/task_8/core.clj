@@ -16,8 +16,8 @@
   (println q)
 ;  (println (instance-class q))
 
-;  (println (is_instance? q))
-;  (println (is_instance? [1 2]))
+;  (println (is-instance? q))
+;  (println (is-instance? [1 2]))
 ;  (println (getf q :cnt2))
 ;  (setf q :cnt2 '(3))
 ;  (println (getf q :cnt2))
