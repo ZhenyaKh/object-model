@@ -1,6 +1,4 @@
-# task_8
-
-FIXME: description
+# Awesome object model for Clojure
 
 ## Installation
 
