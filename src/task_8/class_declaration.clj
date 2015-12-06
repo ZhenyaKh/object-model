@@ -6,18 +6,8 @@
 
 (use 'clojure.set)
 
-(import 'clojure.lang.Keyword)
-(import 'java.io.Writer)
-
-(defmethod print-method
-  "This is a class hierachy"
-  Keyword [^Keyword k, ^Writer w]
-  (if (.getNamespace k)
-    (.write w (str "::" (name k)))
-    (.write w (str k))))
-
 (def classes-hierarchy
-  "This is a class hierachy"
+  "This is a hierachy of classes."
   (ref {}))
 
 (dosync (alter classes-hierarchy assoc
@@ -25,68 +15,61 @@
                    ::fields {}}))
 
 (defmacro def-class [name & sections]
-  "This macro creates a class declaration"
-  `(do
-     (assert (not (contains? @classes-hierarchy ~name)) "Forbidden new class name.")
-     (let [sections_map# (apply hash-map (mapcat (fn [section#] section#) '~sections))
+  "This macro creates a class declaration."
+  `(let [sections_map# (apply hash-map (mapcat (fn [section#] section#) '~sections))
          super# (or (sections_map# :super) :Object)
          fields# (or (apply hash-set (sections_map# :fields)) {})]
-     (dosync (alter classes-hierarchy assoc
-               ~name {::super super#
-                      ::fields fields#})))))
-
-(defn own-class
-  "This function indicates a super"
-  [class]
-  ((classes-hierarchy class) ::class))
+     (dosync
+       (assert (not (contains? @classes-hierarchy ~name)) (format "Forbidden new class name %s." ~name))
+       (alter classes-hierarchy assoc ~name {::super super# ::fields fields#}))))
 
 (defn super-class
-  "This function indicates a super"
+  "Indicates a super class of the class."
   [class]
-  ((classes-hierarchy class) ::super))
+  ((@classes-hierarchy class) ::super))
 
 (defn create-instance
-  "This function creates an instance"
+  "Creates an instance of the class."
   [class & fields_values]
-  {:pre [(contains? @classes-hierarchy class)]}
+  {:pre [(contains? @classes-hierarchy class)
+         (even? (.size fields_values))]}
   (let [get_all_fields (fn [c fields]
                          (if (not (nil? c))
                            (recur (super-class c) (union fields ((@classes-hierarchy c) ::fields)))
                            fields))
         all_fields (get_all_fields class {})
         fields_values_map (apply hash-map fields_values)
-        state (ref {})]
-    (assert (= (apply hash-set (keys fields_values_map)) all_fields) "create-instance: wrong fields.")
-    (doseq [field_value_pair fields_values_map]
-      (dosync (alter state assoc (first field_value_pair) (second field_value_pair))))
+        state (into {} (map (fn [pair] [(first pair) (ref (second pair))]) fields_values_map))]
+    (assert (= (apply hash-set (keys state)) all_fields) "create-instance: wrong fields.")
     {::class class, ::state state}))
 
 (defn getf
-  "This... TODO"
+  "This is the getter (common for all classes)."
   [obj field]
   (let [state (obj ::state)]
-    (assert (contains? @state field) "getf: no such field.")
-    (state field)))
+    (assert (contains? state field) "getf: no such field.")
+    (deref (state field))))
 
 (defn setf
-  "This... TODO"
+  "This is the setter (common for all classes)."
   [obj field new_value]
   (let [state (obj ::state)]
-    (assert (contains? @state field))
-    (dosync (alter state assoc field new_value))))
+    (assert (contains? state field))
+    (dosync (ref-set (state field) new_value))))
 
 (defn instance-class
-  "This... TODO"
+  "Returns the class name of the instance."
   [instance]
   (instance ::class))
 
 (defn is-instance?
-  "This... TODO"
+  "Returns true iff obj is an instance of some class."
   [obj]
   (and (map? obj) (contains? obj ::class)))
 
 (defmacro def-command
-  "This macro defines a command... TODO"
+  "This macro creates the command ~name that either adds a new virtual version of method ~name to
+  the command virtual table or calls the already added version of ~name using perform-effective-command."
   [name]
   `(let [vtable# (ref {})]
      (defn ~name [obj# & args#]
@@ -96,15 +79,17 @@
          (dosync (alter vtable# assoc (first obj#) (second obj#)))))))
 
 (defmacro def-method
-  "This macro defines a method... TODO"
+  "This calls the command ~name to add a new virtual version of method ~name to
+  the command virtual table. The virtual version is of ~class class."
   [method_name class method_arguments & method_body]
   `(~method_name [~class (fn ~method_arguments ~@method_body)]))
 
-;; what is it?
+;; заглушка для super, который определяется каждый раз в perform-effective-command с помощью binding
 (def ^:dynamic super nil)
 
 (defn perform-effective-command
-  "This... TODO"
+  "Peforms the command whose virtual versions are all kept in vtable. The performance can go down
+  the classes hierarchy from the base class to the last derived one if (super ...) is called."
   [vtable class obj & args]
   (let [eff_class (loop [x class]
                     (assert (not (nil? x)) "No such method.")
