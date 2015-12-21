@@ -2,46 +2,62 @@
   "In this namespace we implemented all methods and macroses to create classes
 
    And so on..."
+  (:require [task-8.util :refer :all])
   (:gen-class))
 
 (use 'clojure.set)
 
 (def classes-hierarchy
   "This is a hierachy of classes."
-  (ref {}))
+  (ref {::Object {::super nil
+                    ::fields {}
+                    :init nil
+                    :accessor nil
+                    :reader nil
+                    :writer nil}}))
 
-(dosync (alter classes-hierarchy assoc
-          :Object {::super nil
-                   ::fields {}}))
-
-(defmacro def-class [name & sections]
+(defmacro def-class [name supers fields & sections]
   "This macro creates a class declaration."
-  `(let [sections_map# (apply hash-map (mapcat (fn [section#] section#) '~sections))
-         super# (or (sections_map# :super) :Object)
-         fields# (or (apply hash-set (sections_map# :fields)) {})]
+  `(let [super# (if (empty? '~supers)
+                  (list ::Object)
+                  '~supers)
+         fields# (set '~fields)
+         sections# (apply merge (map eval '~sections))
+         init# (get sections# :init)
+         accessor# (get sections# :accessor)
+         reader# (get sections# :reader)
+         writer# (get sections# :writer)]
      (dosync
        (assert (not (contains? @classes-hierarchy ~name)) (format "Forbidden new class name %s." ~name))
-       (alter classes-hierarchy assoc ~name {::super super# ::fields fields#}))))
+       (alter classes-hierarchy assoc ~name {::super super#
+                                             ::fields fields#
+                                             ::init init#
+                                             ::accessor accessor#
+                                             ::reader reader#
+                                             ::writer writer#}))))
 
 (defn super-class
   "Indicates a super class of the class."
   [class]
-  ((@classes-hierarchy class) ::super))
+  (get (get @classes-hierarchy class) ::super))
 
-(defn create-instance
+(defn new-instance
   "Creates an instance of the class."
   [class & fields_values]
   {:pre [(contains? @classes-hierarchy class)
          (even? (.size fields_values))]}
-  (let [get_all_fields (fn [c fields]
-                         (if (not (nil? c))
-                           (recur (super-class c) (union fields ((@classes-hierarchy c) ::fields)))
-                           fields))
-        all_fields (get_all_fields class {})
-        fields_values_map (apply hash-map fields_values)
-        state (into {} (map (fn [pair] [(first pair) (ref (second pair))]) fields_values_map))]
-    (assert (= (apply hash-set (keys state)) all_fields) "create-instance: wrong fields.")
-    {::class class, ::state state}))
+  (let [all_fields (get-all-fields class)
+        all_inits (get-all-inits class)
+        fields_values_map (merge all_inits (apply hash-map fields_values))
+        state (into
+                {}
+                (map
+                  (fn [pair] [(first pair) (ref (second pair))])
+                  fields_values_map))]
+                               (do 
+                                 (println "fields_values_map: " fields_values_map)
+    (assert (= (apply hash-set (keys state)) all_fields) "new-instance: wrong fields.")
+    {::class class, ::state state})))
 
 (defn getf
   "This is the getter (common for all classes)."
@@ -67,10 +83,10 @@
   [obj]
   (and (map? obj) (contains? obj ::class)))
 
-(defmacro def-command
+(defmacro def-generic
   "This macro creates the command ~name that either adds a new virtual version of method ~name to
   the command virtual table or calls the already added version of ~name using perform-effective-command."
-  [name]
+  [name args]
   `(let [vtable# (ref {})]
      (defn ~name [obj# & args#]
        (if (is-instance? obj#)
@@ -81,8 +97,8 @@
 (defmacro def-method
   "This calls the command ~name to add a new virtual version of method ~name to
   the command virtual table. The virtual version is of ~class class."
-  [method_name class method_arguments & method_body]
-  `(~method_name [~class (fn ~method_arguments ~@method_body)]))
+  [name class args & body]
+  `(~name [~class (fn ~args ~@body)]))
 
 ;; заглушка для super, который определяется каждый раз в perform-effective-command с помощью binding
 (def ^:dynamic super nil)

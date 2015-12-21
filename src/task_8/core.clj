@@ -1,5 +1,6 @@
 (ns task-8.core
   (:require [task-8.class_declaration :refer :all])
+  (:require [task-8.util :refer :all])
   (:gen-class))
 
 (use 'clojure.set)
@@ -17,13 +18,32 @@
 
 (defn -main []
 
-;  (def-class :Base (:fields (:cnt1 :cnt2 :cnt3)))
+  (def-class :B ()
+    (:cnt1 :cnt2 :cnt3))
+  
+  (def-class :B1 ()
+    (:cnt :fld1 :fld2)
+    (attr-accessor :cnt)
+    (attr-reader :fld1)
+    (attr-writer :fld2)
+    (init :cnt 42
+          :fld1 "Test"
+          :fld2 (list 1 2 3)))
 
-;  (def-class :Derived (:super :Base) (:fields (:cnt4)))
+  (def-class :D (:B)
+    (:cnt1 :cntD1))
 
-;  (def-class :Derived_from_Derived (:super :Derived) (:fields (:cnt5)))
+  (def-class :DD (:D :B1)
+    (:cnt5)
+    (init :cnt5 1
+          :fld2 `(4 5 6)))
 
-;  (def q (create-instance :Base :cnt1 "1" :cnt2 '(2) :cnt3 3))
+  (println "asd")
+  ;(def q (new-instance :B :cnt1 "1" :cnt2 '(2) :cnt3 3))
+  (def q (new-instance :B1 :cnt 1 :fld2 '(2) :fld1 "Test2"))
+  (println)
+  (def e (new-instance :DD :cntD1 1 :cnt1 3 :fld1 "Test3" :cnt 2 :cnt2 1 :cnt5 32 :cnt3 5))
+  
 ;  (println q)
 ;  (println (instance-class q))
 
@@ -33,7 +53,7 @@
 ;  (setf q :cnt2 '(3))
 ;  (println (getf q :cnt2))
 ;
-;  (def-command increment-cnt)
+;  (def-generic increment-cnt)
 ;  (def-method increment-cnt :Base [obj amount amount2]
 ;    (setf obj :cnt3 (+ amount (getf obj :cnt3))))
 
@@ -50,8 +70,6 @@
 ;  (println w)
 ;  (increment-cnt w 5 7)
 ;  (println w)
-
-;  (def e (create-instance :Derived_from_Derived :cnt1 "1" :cnt2 '(2) :cnt4 4 :cnt3 3 :cnt5 10))
 ;
 ;  (def-method increment-cnt :Derived_from_Derived [obj amount amount2]
 ;    (super amount amount2)
@@ -72,6 +90,8 @@
 
   ;(Thread/sleep 1000)
 
+  (println "asd")
+  
   (println "\nThe End."))
 
 
