@@ -140,9 +140,6 @@ Successor overrides values set up in predecessor"
   (and (map? obj) (contains? obj ::class)))
 
 (defmacro def-generic
-  ; TODO (delete when read, please) Nothing changed unless except one thing...
-  ; TODO (delete when read, please) I'm sorry I changed name, it was def-command, I thought it would be better name
-  ; TODO (delete when read, please) To be honest I took it from Common Lisp and thought so
   "This macro creates the command ~name that either adds a new virtual version of method ~name to
   the command virtual table or calls the already added version of ~name using perform-effective-command."
   [name args]

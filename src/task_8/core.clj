@@ -6,7 +6,8 @@
 (use 'clojure.repl)
 
 ;; This is for pretty printing of ::keywords.
-;; TODO (delete when read, please) Please, explain what do you use it for? What does it do?
+;; TODO (delete when read, please) If you perform (println ::keyword) without this code the output
+;; TODO (delete when read, please) will be ":task-8.core/keyword" instead of just "::keyword".
 (import 'clojure.lang.Keyword)
 (import 'java.io.Writer)
 (defmethod print-method
@@ -14,6 +15,8 @@
   (if (.getNamespace k)
     (.write w (str "::" (name k)))
     (.write w (str k))))
+
+(println ::fields)
 
 (def-class :B ()
   (:cnt1 :cnt2 :cnt3))
