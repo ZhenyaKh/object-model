@@ -1,6 +1,5 @@
 (ns task-8.core
   (:require [task-8.class_declaration :refer :all])
-  (:require [task-8.util :refer :all])
   (:gen-class))
 
 (use 'clojure.set)
@@ -15,9 +14,9 @@
     (.write w (str "::" (name k)))
     (.write w (str k))))
 
-
-(defn -main []
-
+  (macroexpand `(def-class :B ()
+    (:cnt1 :cnt2 :cnt3)))
+  
   (def-class :B ()
     (:cnt1 :cnt2 :cnt3))
   
@@ -38,12 +37,13 @@
     (init :cnt5 1
           :fld2 `(4 5 6)))
 
-  (println "asd")
-  ;(def q (new-instance :B :cnt1 "1" :cnt2 '(2) :cnt3 3))
-  (def q (new-instance :B1 :cnt 1 :fld2 '(2) :fld1 "Test2"))
-  (println)
-  (def e (new-instance :DD :cntD1 1 :cnt1 3 :fld1 "Test3" :cnt 2 :cnt2 1 :cnt5 32 :cnt3 5))
+(defn -main []
+  (def q (new-instance :B :cnt1 "1" :cnt2 '(2) :cnt3 3))
+(def q (new-instance :B1 :cnt 1 :fld2 '(2) :fld1 "Test2"))
+(def e (new-instance :DD :cntD1 1 :cnt1 3 :fld1 "Test3" :cnt 2 :cnt2 1 :cnt5 32 :cnt3 5))
   
+(get-cnt e)
+
 ;  (println q)
 ;  (println (instance-class q))
 
@@ -90,8 +90,6 @@
 
   ;(Thread/sleep 1000)
 
-  (println "asd")
-  
   (println "\nThe End."))
 
 
