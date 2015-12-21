@@ -21,18 +21,23 @@
   (get (get @classes-hierarchy class) ::super))
 
 (defn init [field value & map]
+  "init section for class-def"
   {:init (apply hash-map field value map)})
 
 (defn attr-accessor [field & fields]
+  "attr-accessor section for class-def"
   {:accessor (apply list field fields)})
 
 (defn attr-reader [field & fields]
+  "attr-reader section for class-def"
   {:reader (apply list field fields)})
 
 (defn attr-writer [field & fields]
+  "attr-writer section for class-def"
   {:writer (apply list field fields)})
 
 (defn get-all-fields [сlass]
+  "Extracts all fields of the class including all predecessor"
   (let [class-def (get @classes-hierarchy сlass)
         class-fields (get class-def ::fields)
         supers (super-class сlass)]
@@ -45,6 +50,8 @@
       class-fields)))
 
 (defn get-all-inits [сlass]
+  "Extracts all default values of the class including all predecessor.
+Successor overrides values set up in predecessor"
   (let [class-def (get @classes-hierarchy сlass)
         class-init (get class-def ::init)
         supers (super-class сlass)]
@@ -56,16 +63,18 @@
         class-init)
       class-init)))
 
-; defines a piece of code for getter
+
 (defn def-getter [field]
+  "defines a piece of code for getter"
   {:pre [(keyword? field)]}
   `(defn ~(symbol (str "get-" (name field))) [object#]
-     (let [state# (get object# ::state)]
-       (assert (contains? state# ~field) "getf: no such field.")
-       @(get state# ~field))))
+   (let [state# (get object# ::state)]
+     (assert (contains? state# ~field) "getf: no such field.")
+     @(get state# ~field))))
 
-; defines a piece of code for setter
+
 (defn def-setter [field]
+  "defines a piece of code for setter"
   {:pre [(keyword? field)]}
   `(defn ~(symbol (str "set-" (name field))) [object# new-value#]
      (let [state# (get object# ::state)]
@@ -79,27 +88,30 @@
         accessor (get sections :accessor)
         reader (get sections :reader)
         writer (get sections :writer)]
+    ; actually defining class consists of...
     (concat
-     `(let [super# (if (empty? '~supers)
-                     (list ::Object)
-                     '~supers)
-            fields# (set '~fields)]
-       (dosync
-        ;(assert (not (contains? @classes-hierarchy ~name)) (format "Forbidden new class name %s." ~name))
-        (alter classes-hierarchy assoc ~name {::super super#
-                                             ::fields fields#
-                                             ::init '~init
-                                             ::accessor '~accessor
-                                             ::reader '~reader
-                                             ::writer '~writer})))
-     (for [i accessor]
-       (def-getter i))
-     (for [i accessor]
-       (def-setter i))
-     (for [i reader]
-       (def-getter i))
-     (for [i writer]
-       (def-setter i)))))
+      `(let [super# (if (empty? '~supers)
+                      (list ::Object)
+                      '~supers)
+             fields# (set '~fields)]
+         ; registering a new class in classes-hierarchy
+        (dosync
+         ;(assert (not (contains? @classes-hierarchy ~name)) (format "Forbidden new class name %s." ~name))
+         (alter classes-hierarchy assoc ~name {::super super#
+                                              ::fields fields#
+                                              ::init '~init
+                                              ::accessor '~accessor
+                                              ::reader '~reader
+                                              ::writer '~writer})))
+      ; processing list of fields need setters and getters and providing them
+      (for [i accessor]
+        (def-getter i))
+      (for [i accessor]
+        (def-setter i))
+      (for [i reader]
+        (def-getter i))
+      (for [i writer]
+        (def-setter i)))))
 
 (defn new-instance
   "Creates an instance of the class."
@@ -107,13 +119,13 @@
   {:pre [(contains? @classes-hierarchy class)
          (even? (.size fields_values))]}
   (let [all_fields (get-all-fields class)
-  all_inits (get-all-inits class)
+        all_inits (get-all-inits class)
         fields_values_map (merge all_inits (apply hash-map fields_values))
         state (into
-          {}
-          (map
-            (fn [pair] [(first pair) (ref (second pair))])
-            fields_values_map))] 
+                {}
+                (map
+                  (fn [pair] [(first pair) (ref (second pair))])
+                  fields_values_map))] 
     (assert (= (apply hash-set (keys state)) all_fields) "new-instance: wrong fields.")
     {::class class, ::state state}))
 
@@ -128,6 +140,9 @@
   (and (map? obj) (contains? obj ::class)))
 
 (defmacro def-generic
+  ; TODO (delete when read, please) Nothing changed unless except one thing...
+  ; TODO (delete when read, please) I'm sorry I changed name, it was def-command, I thought it would be better name
+  ; TODO (delete when read, please) To be honest I took it from Common Lisp and thought so
   "This macro creates the command ~name that either adds a new virtual version of method ~name to
   the command virtual table or calls the already added version of ~name using perform-effective-command."
   [name args]

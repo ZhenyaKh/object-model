@@ -6,6 +6,7 @@
 (use 'clojure.repl)
 
 ;; This is for pretty printing of ::keywords.
+;; TODO (delete when read, please) Please, explain what do you use it for? What does it do?
 (import 'clojure.lang.Keyword)
 (import 'java.io.Writer)
 (defmethod print-method
@@ -14,43 +15,40 @@
     (.write w (str "::" (name k)))
     (.write w (str k))))
 
-  (macroexpand `(def-class :B ()
-    (:cnt1 :cnt2 :cnt3)))
-  
-  (def-class :B ()
-    (:cnt1 :cnt2 :cnt3))
-  
-  (def-class :B1 ()
-    (:cnt :fld1 :fld2)
-    (attr-accessor :cnt)
-    (attr-reader :fld1 :fld2)
-    (attr-writer :fld2)
-    (init :cnt 42
-          :fld1 "Test"
-          :fld2 (list 1 2 3)))
+(def-class :B ()
+  (:cnt1 :cnt2 :cnt3))
 
-  (def-class :D (:B)
-    (:cnt1 :cntD1))
+(def-class :B1 ()
+  (:cnt :fld1 :fld2)
+  (attr-accessor :cnt)
+  (attr-reader :fld1 :fld2)
+  (attr-writer :fld2)
+  (init :cnt 42
+        :fld1 "Test"
+        :fld2 (list 1 2 3)))
 
-  (def-class :DD (:D :B1)
-    (:cnt5)
-    (init :cnt5 1
-          :fld2 `(4 5 6)))
+(def-class :D (:B)
+  (:cnt1 :cntD1))
+
+(def-class :DD (:D :B1)
+  (:cnt5)
+  (init :cnt5 1
+        :fld2 `(4 5 6)))
 
 (defn -main []
   (def q (new-instance :B :cnt1 "1" :cnt2 '(2) :cnt3 3))
-(def q (new-instance :B1 :cnt 1 :fld2 '(2) :fld1 "Test2"))
-(def e (new-instance :DD :cntD1 1 :cnt1 3 :fld1 "Test3" :cnt 2 :cnt2 1 :cnt5 32 :cnt3 5))
+  (def q (new-instance :B1 :cnt 1 :fld2 '(2) :fld1 "Test2"))
+  (def e (new-instance :DD :cntD1 1 :cnt1 3 :fld1 "Test3" :cnt 2 :cnt2 1 :cnt5 32 :cnt3 5))
   
-(println (get-cnt e))
-(println (get-cnt q))
-(println (get-fld1 e))
+  (println (get-cnt e))
+  (println (get-cnt q))
+  (println (get-fld1 e))
 
-(set-cnt e 6)
-(println (get-cnt e))
+  (set-cnt e 6)
+  (println (get-cnt e))
 
-(set-fld2 q `(1 5 10))
-(println (get-fld2 q))
+  (set-fld2 q `(1 5 10))
+  (println (get-fld2 q))
 
 ;  (println q)
 ;  (println (instance-class q))
