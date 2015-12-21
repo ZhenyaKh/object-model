@@ -60,17 +60,17 @@
 (defn def-getter [field]
   {:pre [(keyword? field)]}
   `(defn ~(symbol (str "get-" (name field))) [object#]
-     (do
-       (println "getter called")
-       1)))
+     (let [state# (get object# ::state)]
+       (assert (contains? state# ~field) "getf: no such field.")
+       @(get state# ~field))))
 
 ; defines a piece of code for setter
 (defn def-setter [field]
   {:pre [(keyword? field)]}
-  `(defn ~(symbol (str "set-" (name field))) [object#]
-     (do
-       (println "setter called")
-       2)))
+  `(defn ~(symbol (str "set-" (name field))) [object# new-value#]
+     (let [state# (get object# ::state)]
+       (assert (contains? state# ~field) "setf: no such field.")
+       (dosync (ref-set (get state# ~field) new-value#)))))
 
 (defmacro def-class [name supers fields & sections]
   "This macro creates a class declaration."
@@ -95,6 +95,10 @@
      (for [i accessor]
        (def-getter i))
      (for [i accessor]
+       (def-setter i))
+     (for [i reader]
+       (def-getter i))
+     (for [i writer]
        (def-setter i)))))
 
 (defn new-instance
@@ -109,11 +113,9 @@
           {}
           (map
             (fn [pair] [(first pair) (ref (second pair))])
-            fields_values_map))]
-                         (do 
-                           (println "fields_values_map: " fields_values_map)
+            fields_values_map))] 
     (assert (= (apply hash-set (keys state)) all_fields) "new-instance: wrong fields.")
-    {::class class, ::state state})))
+    {::class class, ::state state}))
 
 (defn instance-class
   "Returns the class name of the instance."

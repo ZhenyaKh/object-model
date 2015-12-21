@@ -23,7 +23,7 @@
   (def-class :B1 ()
     (:cnt :fld1 :fld2)
     (attr-accessor :cnt)
-    (attr-reader :fld1)
+    (attr-reader :fld1 :fld2)
     (attr-writer :fld2)
     (init :cnt 42
           :fld1 "Test"
@@ -42,7 +42,15 @@
 (def q (new-instance :B1 :cnt 1 :fld2 '(2) :fld1 "Test2"))
 (def e (new-instance :DD :cntD1 1 :cnt1 3 :fld1 "Test3" :cnt 2 :cnt2 1 :cnt5 32 :cnt3 5))
   
-(get-cnt e)
+(println (get-cnt e))
+(println (get-cnt q))
+(println (get-fld1 e))
+
+(set-cnt e 6)
+(println (get-cnt e))
+
+(set-fld2 q `(1 5 10))
+(println (get-fld2 q))
 
 ;  (println q)
 ;  (println (instance-class q))
