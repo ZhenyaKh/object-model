@@ -164,9 +164,18 @@ Successor overrides values set up in predecessor"
   "Peforms the command whose virtual versions are all kept in vtable. The performance can go down
   the classes hierarchy from the base class to the last derived one if (super ...) is called."
   [vtable class obj & args]
-  (let [eff_class (loop [x class]
-                    (assert (not (nil? x)) "No such method.")
-                    (if (contains? vtable x) x (recur (first (super-class x)))))
-        eff_method (vtable eff_class)]
-    (binding [call_next_method (partial perform-effective-command vtable (first (super-class class)) obj)]
-      (dosync (apply eff_method (concat (list obj) args))))))
+  (let [BFS_classes (loop [acc (list class) ; BFS = Breadth-first search
+                           queue acc]
+                      (let [head (first queue)
+                            parents (super-class head)]
+                        (if (empty? queue) acc
+                          (recur (concat acc parents) (concat (rest queue) parents)))))
+        eff_classes (distinct (filter #(contains? vtable %) BFS_classes))]
+    (println eff_classes)))
+
+
+
+
+
+
+

@@ -101,15 +101,23 @@
   (def-class :A () (:a))
   (def-class :B (:A) (:b))
   (def-class :C (:A) (:c))
-  (def-class :D (:B) (:d))
+  (def-class :D (:A) (:d))
+  (def-class :E (:B :C) (:e))
+  (def-class :F (:D) (:f))
+  (def-class :G (:D) (:g))
+  (def-class :H (:E :F :G) (:h)) ; BFS = ({:H} {:E :F :G} {:B :C :D} {:A}), {..} means a common tree level.
 
-  (def e (new-instance :B :a 1 :b 2))
+  (def e (new-instance :H :a 1 :b 2 :c 3 :d 4 :e 5 :f 6 :g 7 :h 8))
 
   (def-generic classes-names)
   (def-method classes-names :A [obj] (println :A))
   (def-method classes-names :B [obj] (call_next_method) (println :B))
   (def-method classes-names :C [obj] (println :C))
   (def-method classes-names :D [obj] (println :D))
+  (def-method classes-names :E [obj] (println :E))
+  (def-method classes-names :F [obj] (println :F))
+  (def-method classes-names :G [obj] (println :G))
+  (def-method classes-names :H [obj] (println :H))
 
   (classes-names e)
 
