@@ -96,7 +96,7 @@ Successor overrides values set up in predecessor"
              fields# (set '~fields)]
          ; registering a new class in classes-hierarchy
         (dosync
-         ;(assert (not (contains? @classes-hierarchy ~name)) (format "Forbidden new class name %s." ~name))
+         (assert (not (contains? @classes-hierarchy ~name)) (format "Forbidden new class name %s." ~name))
          (alter classes-hierarchy assoc ~name {::super super#
                                               ::fields fields#
                                               ::init '~init
@@ -113,6 +113,7 @@ Successor overrides values set up in predecessor"
       (for [i writer]
         (def-setter i)))))
 
+; TODO The case when there are no fields AT ALL in the whole class hierarchy and so user calls (new-instance :class) without any fields_values does not work.
 (defn new-instance
   "Creates an instance of the class."
   [class & fields_values]
@@ -142,7 +143,7 @@ Successor overrides values set up in predecessor"
 (defmacro def-generic
   "This macro creates the command ~name that either adds a new virtual version of method ~name to
   the command virtual table or calls the already added version of ~name using perform-effective-command."
-  [name args]
+  [name]
   `(let [vtable# (ref {})]
      (defn ~name [obj# & args#]
        (if (is-instance? obj#)
@@ -157,7 +158,7 @@ Successor overrides values set up in predecessor"
   `(~name [~class (fn ~args ~@body)]))
 
 ;; заглушка для super, который определяется каждый раз в perform-effective-command с помощью binding
-(def ^:dynamic super nil)
+(def ^:dynamic call_next_method nil)
 
 (defn perform-effective-command
   "Peforms the command whose virtual versions are all kept in vtable. The performance can go down
@@ -165,7 +166,7 @@ Successor overrides values set up in predecessor"
   [vtable class obj & args]
   (let [eff_class (loop [x class]
                     (assert (not (nil? x)) "No such method.")
-                    (if (contains? vtable x) x (recur (super-class x))))
+                    (if (contains? vtable x) x (recur (first (super-class x)))))
         eff_method (vtable eff_class)]
-    (binding [super (partial perform-effective-command vtable (super-class class) obj)]
+    (binding [call_next_method (partial perform-effective-command vtable (first (super-class class)) obj)]
       (dosync (apply eff_method (concat (list obj) args))))))
