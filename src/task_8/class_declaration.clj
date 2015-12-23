@@ -113,13 +113,13 @@ Successor overrides values set up in predecessor"
       (for [i writer]
         (def-setter i)))))
 
-; TODO The case when there are no fields AT ALL in the whole class hierarchy and so user calls (new-instance :class) without any fields_values does not work.
 (defn new-instance
   "Creates an instance of the class."
   [class & fields_values]
   {:pre [(contains? @classes-hierarchy class)
-         (even? (.size fields_values))]}
-  (let [all_fields (get-all-fields class)
+         (or (nil? fields_values) (even? (.size fields_values)))]}
+  (let [fields_values (if (nil? fields_values) '() fields_values)
+        all_fields (get-all-fields class)
         all_inits (get-all-inits class)
         fields_values_map (merge all_inits (apply hash-map fields_values))
         state (into
@@ -147,8 +147,17 @@ Successor overrides values set up in predecessor"
   `(let [vtable# (ref {})]
      (defn ~name [obj# & args#]
        (if (is-instance? obj#)
-         (apply perform-effective-command
-           (concat (list @vtable# (instance-class obj#) obj#) args#))
+         (let [class# (instance-class obj#)
+               BFS_classes# (loop [acc# (list class#) ; BFS = Breadth-first search
+                                  queue# acc#]
+                             (let [head# (first queue#)
+                                   fathers# (super-class head#)]
+                               (if (empty? queue#) acc#
+                                 (recur (concat acc# fathers#) (concat (rest queue#) fathers#)))))
+               eff_classes# (distinct (filter #(contains? @vtable# %) BFS_classes#))]
+           (println eff_classes#)
+           (apply perform-effective-command
+                  (concat (list @vtable# eff_classes# 0 obj#) args#)))
          (dosync (alter vtable# assoc (first obj#) (second obj#)))))))
 
 (defmacro def-method
@@ -163,19 +172,12 @@ Successor overrides values set up in predecessor"
 (defn perform-effective-command
   "Peforms the command whose virtual versions are all kept in vtable. The performance can go down
   the classes hierarchy from the base class to the last derived one if (super ...) is called."
-  [vtable class obj & args]
-  (let [BFS_classes (loop [acc (list class) ; BFS = Breadth-first search
-                           queue acc]
-                      (let [head (first queue)
-                            parents (super-class head)]
-                        (if (empty? queue) acc
-                          (recur (concat acc parents) (concat (rest queue) parents)))))
-        eff_classes (distinct (filter #(contains? vtable %) BFS_classes))]
-    (println eff_classes)))
-
-
-
-
-
-
+  [vtable eff_classes eff_index obj & args]
+  {:pre [(< eff_index (.size eff_classes))]}
+  (let [eff_class (nth eff_classes eff_index)
+        eff_method (vtable eff_class)]
+    (binding [call_next_method 
+              (partial perform-effective-command vtable eff_classes (inc eff_index) obj)]
+      (dosync (apply eff_method (concat (list obj) args))))))
+    
 
