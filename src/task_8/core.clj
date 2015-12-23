@@ -118,7 +118,7 @@
   (def-method classes-names :F [obj] (println :F) (call_next_method))
   (def-method classes-names :G [obj] (println :G) (call_next_method))
   (def-method classes-names :H [obj] (println :H) (call_next_method))
-
+                           ; [(:H obj1) (:J obj2) arg1 arg2 ... argN]  
   (classes-names e)
 
 
