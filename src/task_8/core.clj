@@ -15,28 +15,29 @@
     (.write w (str k))))
 
 (defn -main []
-  ;(def-class :A () ())
-  ;(def-class :B (:A) ())
-  ;(def-class :C (:A) ())
-  ;(def-class :D (:A) ())
-  ;(def-class :E (:B :C) ())
-  ;(def-class :F (:D) ())
-  ;(def-class :G (:D) ())
-  ;(def-class :H (:E :F :G) ())
+  (def-class :A () ())
+  (def-class :B (:A) ())
+  (def-class :C (:A) ())
+  (def-class :D (:A) ())
+  (def-class :E (:B :C) ())
+  (def-class :F (:D) ())
+  (def-class :G (:D) ())
+  (def-class :H (:E :F :G) ())
   ; BFS = ({:H} {:E :F :G} {:B :C :D} {:A}), {..} means a common tree level.
-  ;(def e (new-instance :H))
 
-  ;(def-generic classes-names)
-  ;(def-method classes-names :A [obj] (println :A)) 
-  ;(def-method classes-names :B [obj] (call_next_method) (println :B))
-  ;(def-method classes-names :C [obj] (println :C) (call_next_method))
-  ;(def-method classes-names :D [obj] (println :D) (call_next_method))
-  ;(def-method classes-names :E [obj] (println :E) (call_next_method))
-  ;(def-method classes-names :F [obj] (println :F) (call_next_method))
-  ;(def-method classes-names :G [obj] (println :G) (call_next_method))
-  ;(def-method classes-names :H [obj] (println :H) (call_next_method))
+  (def e (new-instance :H))
+
+  (def-generic classes-names)
+  (def-method classes-names :A [obj] (println :A))
+  (def-method classes-names :B [obj] (call-next-method) (println :B))
+  (def-method classes-names :C [obj] (println :C) (call-next-method))
+  (def-method classes-names :D [obj] (println :D) (call-next-method))
+  (def-method classes-names :E [obj] (println :E) (call-next-method))
+  (def-method classes-names :F [obj] (println :F) (call-next-method))
+  (def-method classes-names :G [obj] (println :G) (call-next-method))
+  (def-method classes-names :H [obj] (println :H) (call-next-method))
                            ; [(:H obj1) (:J obj2) arg1 arg2 ... argN]  
-  ;(classes-names e)
+  (classes-names e)
 
 
   (println "\nThe End."))

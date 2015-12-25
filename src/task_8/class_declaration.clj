@@ -1,7 +1,6 @@
 (ns task-8.class_declaration
-  "In this namespace we implemented all methods and macroses to create classes
-
-   And so on..."
+  "In this namespace we implemented all methods and macroses to create
+  the multiple inheritance object model resenbling on of Common Lisp"
   (:gen-class))
 
 (use 'clojure.set)
@@ -51,7 +50,7 @@
 
 (defn get-all-inits [сlass]
   "Extracts all default values of the class including all predecessor.
-Successor overrides values set up in predecessor"
+  Successor overrides values set up in predecessor"
   (let [class-def (get @classes-hierarchy сlass)
         class-init (get class-def ::init)
         supers (super-class сlass)]
@@ -142,7 +141,8 @@ Successor overrides values set up in predecessor"
 
 (defmacro def-generic
   "This macro creates the command ~name that either adds a new virtual version of method ~name to
-  the command virtual table or calls the already added version of ~name using perform-effective-command."
+  the command virtual table or calls the already added version of ~name using perform-effective-command.
+  For the latter a multiple inheritance queue 'eff_classes' of classes having the ~name method implemented is created."
   [name]
   `(let [vtable# (ref {})]
      (defn ~name [obj# & args#]
@@ -166,16 +166,16 @@ Successor overrides values set up in predecessor"
   [name class args & body]
   `(~name [~class (fn ~args ~@body)]))
 
-;; заглушка для super, который определяется каждый раз в perform-effective-command с помощью binding
+;; dummy for call-next-method that is defined each time in perform-effective-command using 'binding.
 (def ^:dynamic call-next-method nil)
 
-;; заглушка для self, который определяется каждый раз в perform-effective-command с помощью binding
+;; dummy for self that is defined each time in perform-effective-command using 'binding.
 (def ^:dynamic self nil)
 
 
 (defn perform-effective-command
-  "Peforms the command whose virtual versions are all kept in vtable. The performance can go down
-  the classes hierarchy from the base class to the last derived one if (super ...) is called."
+  "Performs the command whose virtual versions are all kept in vtable. The performance can go along all the classes
+  of 'eff_classes' multiple inheritance queue created by def-generic if (call-next-method ...) is called."
   [vtable eff_classes eff_index obj & args]
   {:pre [(< eff_index (.size eff_classes))]}
   (let [eff_class (nth eff_classes eff_index)
