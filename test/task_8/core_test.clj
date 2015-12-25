@@ -4,7 +4,12 @@
             [task-8.class_declaration :refer :all]))
 
 (def-class :A ()
-  (:a1 :a2))
+  (:a1 :a2 :a3)
+  (attr-accessor :a3)
+  (attr-reader :a2)
+  (attr-writer :a1)
+  (init :a3 42))
+  
 (def-class :B (:E :A)
   (:b))
 (def-class :C (:A)
@@ -68,4 +73,9 @@
     (is (= (m2 d "test") `((:C "test")
                             (:E "test(after C)")
                             (:A "test(after C)")
-                            (:D "test"))))))
+                            (:D "test"))))
+	(is (= 42 (get-a3 d)))
+	(is (do
+		  (set-a3 d 24)
+		  (= 24 (get-a3 d))))
+	(is (= 7 (get-a2 d)))))

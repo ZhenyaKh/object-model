@@ -184,7 +184,7 @@ Successor overrides values set up in predecessor"
               (partial perform-effective-command vtable eff_classes (inc eff_index) obj)
 			  self (fn [field]
 					  {:pre [(keyword? field)]}
-					  (get (get obj ::state) field))
+					  (get (get obj ::state) field))]
       (dosync (apply eff_method (concat (list obj) args))))))
     
 
