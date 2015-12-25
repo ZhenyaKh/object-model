@@ -22,13 +22,13 @@
   `(:A))
 
 (def-method m1 :B [obj]
-  (cons :B (call_next_method)))
+  (cons :B (call-next-method)))
 
 (def-method m1 :C [obj]
-  (cons :C (call_next_method)))
+  (cons :C (call-next-method)))
 
 (def-method m1 :D [obj]
-  (cons :D (call_next_method)))
+  (cons :D (call-next-method)))
 
 ; TODO make like this (def-generic m2 [obj msg])
 (def-generic m2)
@@ -38,12 +38,12 @@
   (list :A msg))
 
 (def-method m2 :C [obj msg]
-  (println (cons (list :C msg) (call_next_method (str msg "(after C)"))))
-  (cons (list :C msg) (call_next_method (str msg "(after C)"))))
+  (println (cons (list :C msg) (call-next-method (str msg "(after C)"))))
+  (cons (list :C msg) (call-next-method (str msg "(after C)"))))
 
 (def-method m2 :D [obj msg]
-  (println (conj (call_next_method msg) (list :D msg)))
-  (conj (call_next_method msg) (list :D msg)))
+  (println (conj (call-next-method msg) (list :D msg)))
+  (conj (call-next-method msg) (list :D msg)))
 
 (def-method m2 :E [obj msg]
  (println (list :E msg))

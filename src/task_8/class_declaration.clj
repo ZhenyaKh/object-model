@@ -167,7 +167,11 @@ Successor overrides values set up in predecessor"
   `(~name [~class (fn ~args ~@body)]))
 
 ;; заглушка для super, который определяется каждый раз в perform-effective-command с помощью binding
-(def ^:dynamic call_next_method nil)
+(def ^:dynamic call-next-method nil)
+
+;; заглушка для self, который определяется каждый раз в perform-effective-command с помощью binding
+(def ^:dynamic self nil)
+
 
 (defn perform-effective-command
   "Peforms the command whose virtual versions are all kept in vtable. The performance can go down
@@ -176,8 +180,11 @@ Successor overrides values set up in predecessor"
   {:pre [(< eff_index (.size eff_classes))]}
   (let [eff_class (nth eff_classes eff_index)
         eff_method (vtable eff_class)]
-    (binding [call_next_method 
-              (partial perform-effective-command vtable eff_classes (inc eff_index) obj)]
+    (binding [call-next-method 
+              (partial perform-effective-command vtable eff_classes (inc eff_index) obj)
+			  self (fn [field]
+					  {:pre [(keyword? field)]}
+					  (get (get obj ::state) field))
       (dosync (apply eff_method (concat (list obj) args))))))
     
 
