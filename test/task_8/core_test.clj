@@ -14,9 +14,6 @@
 ; BFS = ({:D} {:B :C} {:A :E}), {..} means a common tree level.
 (def-class :A ()
   (:a1 :a2 :a3)
-  (attr-accessor :a3)
-  (attr-reader :a2)
-  (attr-writer :a1)
   (init :a3 42))
 (def-class :B (:A :E)
   (:b))
@@ -61,11 +58,11 @@
   (testing "test-1"
     (is (= (m1 d) `(:D :B :C :A)))
     (is (= (m2 d "test") `((:D "test") (:C "test") :A "test(after C)")))
-    (is (= 42 (get-a3 d)))
+    (is (= 42 (getf d :a3)))
     (is (do
-          (set-a3 d 24)
-          (= 24 (get-a3 d))))
-    (is (= 7 (get-a2 d)))))
+          (setf d :a3 24)
+          (= 24 (getf d :a3))))
+    (is (= 7 (getf d :a2)))))
 
 ; Notes how it should be rewritten to support dispatcherization
 ; on many arguments

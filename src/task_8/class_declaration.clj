@@ -9,10 +9,7 @@
   "This is a hierachy of classes."
   (ref {::Object {::super nil
                     ::fields {}
-                    ::init nil
-                    ::accessor nil
-                    ::reader nil
-                    ::writer nil}}))
+                    ::init nil}}))
 
 (defn super-class
   "Indicates a super class of the class."
@@ -22,18 +19,6 @@
 (defn init [field value & map]
   "init section for class-def"
   {:init (apply hash-map field value map)})
-
-(defn attr-accessor [field & fields]
-  "attr-accessor section for class-def"
-  {:accessor (apply list field fields)})
-
-(defn attr-reader [field & fields]
-  "attr-reader section for class-def"
-  {:reader (apply list field fields)})
-
-(defn attr-writer [field & fields]
-  "attr-writer section for class-def"
-  {:writer (apply list field fields)})
 
 (defn get-all-fields [сlass]
   "Extracts all fields of the class including all predecessor"
@@ -62,7 +47,6 @@
         class-init)
       class-init)))
 
-
 (defn def-getter [field]
   "defines a piece of code for getter"
   {:pre [(keyword? field)]}
@@ -83,35 +67,17 @@
 (defmacro def-class [name supers fields & sections]
   "This macro creates a class declaration."
   (let [sections (apply merge (map eval sections))
-        init (get sections :init)
-        accessor (get sections :accessor)
-        reader (get sections :reader)
-        writer (get sections :writer)]
-    ; actually defining class consists of...
-    (concat
-      `(let [super# (if (empty? '~supers)
-                      (list ::Object)
-                      '~supers)
-             fields# (set '~fields)]
-         ; registering a new class in classes-hierarchy
-        (dosync
+        init (get sections :init)]
+    `(let [super# (if (empty? '~supers)
+                    (list ::Object)
+                    '~supers)
+           fields# (set '~fields)]
+       ; registering a new class in classes-hierarchy
+       (dosync
          (assert (not (contains? @classes-hierarchy ~name)) (format "Forbidden new class name %s." ~name))
          (alter classes-hierarchy assoc ~name {::super super#
                                               ::fields fields#
-                                              ::init '~init
-                                              ::accessor '~accessor
-                                              ::reader '~reader
-                                              ::writer '~writer})))
-      ; processing list of fields need setters and getters and providing them
-      (for [i accessor]
-        (def-getter i))
-      (for [i accessor]
-        (def-setter i))
-      (for [i reader]
-        (def-getter i))
-      (for [i writer]
-        (def-setter i)))))
-
+                                              ::init '~init})))))
 (defn new-instance
   "Creates an instance of the class."
   [class & fields_values]
@@ -128,6 +94,20 @@
                   fields_values_map))] 
     (assert (= (apply hash-set (keys state)) all_fields) "new-instance: wrong fields.")
     {::class class, ::state state}))
+
+(defn getf
+  "This is the getter (common for all classes)."
+  [obj field]
+  (let [state (obj ::state)]
+    (assert (contains? state field) "getf: no such field.")
+    (deref (state field))))
+
+(defn setf
+  "This is the setter (common for all classes)."
+  [obj field new_value]
+  (let [state (obj ::state)]
+    (assert (contains? state field))
+    (dosync (ref-set (state field) new_value))))
 
 (defn instance-class
   "Returns the class name of the instance."
@@ -155,23 +135,18 @@
                                (if (empty? queue#) acc#
                                  (recur (concat acc# fathers#) (concat (rest queue#) fathers#)))))
                eff_classes# (distinct (filter #(contains? @vtable# %) BFS_classes#))]
-           (println eff_classes#)
            (apply perform-effective-command
                   (concat (list @vtable# eff_classes# 0 obj#) args#)))
-         (dosync (alter vtable# assoc (first obj#) (second obj#)))))))
+         (dosync (alter vtable# assoc (first obj#) (second obj#)) (println ((vtable# (first obj#)) "obj_1" "obj_2"  "arg1_" "arg2_" "args3_")))))))
 
-(defmacro def-method
-  "This calls the command ~name to add a new virtual version of method ~name to
-  the command virtual table. The virtual version is of ~class class."
-  [name class args & body]
-  `(~name [~class (fn ~args ~@body)]))
+
+(defmacro def-method [name objs_and_args & body]
+  (let [classes (keep #(do (if (seq? %) (first %) nil)) objs_and_args)
+        args (vec (map #(if (seq? %) (second %) %) objs_and_args))]
+    `(~name ['~classes (fn ~args ~@body)])))
 
 ;; dummy for call-next-method that is defined each time in perform-effective-command using 'binding.
 (def ^:dynamic call-next-method nil)
-
-;; dummy for self that is defined each time in perform-effective-command using 'binding.
-(def ^:dynamic self nil)
-
 
 (defn perform-effective-command
   "Performs the command whose virtual versions are all kept in vtable. The performance can go along all the classes
@@ -181,10 +156,7 @@
   (let [eff_class (nth eff_classes eff_index)
         eff_method (vtable eff_class)]
     (binding [call-next-method 
-              (partial perform-effective-command vtable eff_classes (inc eff_index) obj)
-			  self (fn [field]
-					  {:pre [(keyword? field)]}
-					  (get (get obj ::state) field))]
+              (partial perform-effective-command vtable eff_classes (inc eff_index) obj)]
       (dosync (apply eff_method (concat (list obj) args))))))
     
 
