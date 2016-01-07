@@ -1,6 +1,6 @@
-(ns task-8.core-test
+(ns nsu.core-test
   (:require [clojure.test :refer :all]
-            [task-8.class_declaration :refer :all]))
+            [nsu.objectmodel :refer :all]))
 
 ;; This is for pretty printing of ::keywords.
 (import 'clojure.lang.Keyword)

@@ -1,5 +1,5 @@
-(ns task-8.core
-  (:require [task-8.class_declaration :refer :all])
+(ns nsu.core
+  (:require [nsu.objectmodel :refer :all])
   (:gen-class))
 
 ;; This is for pretty printing of ::keywords.

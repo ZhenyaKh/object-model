@@ -1,4 +1,4 @@
-(ns task-8.class_declaration
+(ns nsu.objectmodel
   "In this namespace we implemented all methods and macroses to create
   the multiple inheritance object model resenbling on of Common Lisp"
   (:gen-class))
