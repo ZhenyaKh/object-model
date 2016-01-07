@@ -26,30 +26,30 @@
 
 (def-generic m1)
 
-(def-method m1 :A [obj]
+(def-method m1 [(:A obj)]
   `(:A))
 
-(def-method m1 :B [obj]
+(def-method m1 [(:B obj)]
   (cons :B (call-next-method)))
 
-(def-method m1 :C [obj]
+(def-method m1 [(:C obj)]
   (cons :C (call-next-method)))
 
-(def-method m1 :D [obj]
+(def-method m1 [(:D obj)]
   (cons :D (call-next-method)))
 
 (def-generic m2)
 
-(def-method m2 :A [obj msg]
+(def-method m2 [(:A obj) msg]
   (list :A msg))
 
-(def-method m2 :C [obj msg]
+(def-method m2 [(:C obj) msg]
   (cons (list :C msg) (call-next-method (str msg "(after C)"))))
 
-(def-method m2 :D [obj msg]
+(def-method m2 [(:D obj) msg]
   (conj (call-next-method msg) (list :D msg)))
 
-(def-method m2 :E [obj msg]
+(def-method m2 [(:E obj) msg]
   (list :E msg))
 
 (def d (new-instance :D :d1 1 :d2 2 :b 3 :c 4 :a1 5 :a2 7 :e 8))
@@ -89,14 +89,14 @@
 (def instance (new-instance :M))
 
 (def-generic classes-names)
-(def-method classes-names :F [obj nc] (dosync (alter nc concat '(:F))))
-(def-method classes-names :G [obj nc] (call-next-method nc) (dosync (alter nc concat '(:G))))
-(def-method classes-names :H [obj nc] (dosync (alter nc concat '(:H)) (call-next-method nc)))
-(def-method classes-names :I [obj nc] (dosync (alter nc concat '(:I))) (call-next-method nc))
-(def-method classes-names :J [obj nc] (dosync (alter nc concat '(:J))) (call-next-method nc))
-(def-method classes-names :K [obj nc] (dosync (alter nc concat '(:K))) (call-next-method nc))
-(def-method classes-names :L [obj nc] (dosync (alter nc concat '(:L))) (call-next-method nc))
-(def-method classes-names :M [obj nc] (dosync (alter nc concat '(:M))) (call-next-method nc))
+(def-method classes-names [(:F obj) nc] (dosync (alter nc concat '(:F))))
+(def-method classes-names [(:G obj) nc] (call-next-method nc) (dosync (alter nc concat '(:G))))
+(def-method classes-names [(:H obj) nc] (dosync (alter nc concat '(:H)) (call-next-method nc)))
+(def-method classes-names [(:I obj) nc] (dosync (alter nc concat '(:I))) (call-next-method nc))
+(def-method classes-names [(:J obj) nc] (dosync (alter nc concat '(:J))) (call-next-method nc))
+(def-method classes-names [(:K obj) nc] (dosync (alter nc concat '(:K))) (call-next-method nc))
+(def-method classes-names [(:L obj) nc] (dosync (alter nc concat '(:L))) (call-next-method nc))
+(def-method classes-names [(:M obj) nc] (dosync (alter nc concat '(:M))) (call-next-method nc))
                            ; [(:M obj1) (:J obj2) arg1 arg2 ... argN]
 (deftest test-2
   (testing "test-2"
@@ -104,4 +104,3 @@
     (classes-names instance names_collector)
     (println @names_collector)
     (is (= @names_collector '(:M :J :K :L :H :I :F :G)))))
-
