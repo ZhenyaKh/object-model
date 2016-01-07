@@ -64,17 +64,6 @@
           (= 24 (getf d :a3))))
     (is (= 7 (getf d :a2)))))
 
-; Notes how it should be rewritten to support dispatcherization
-; on many arguments
-; 1 parapeter
-;   (def-generic m)
-;   (def-method m[(:A obj)]
-;     (println :A))
-; 2 parameters
-;   (def-generic m)
-;   (def-method m[(:A obj1) ... (:B obj2) ...]
-;     (println :A))
-
 ; test-2
 (def-class :F () ())
 (def-class :G (:F) ())
