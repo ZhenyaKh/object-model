@@ -5,22 +5,30 @@
   the command virtual table or calls the already added version of ~name using perform-effective-command.
   For the latter a multiple inheritance queue 'eff_classes' of classes having the ~name method implemented is created."
   [name]
-  `(let [vtable# (ref {})]
+  `(let [vtable# (ref {})
+         beforetable# (ref {})
+         aftertable# (ref {})]
      (defn ~name [objs# & args#]
-       ;; when defining method name objs# is [(:A1 A2) (fn[] (...))] and args# is empty
+       ;; when defining method name objs# is [(:A1 A2) (fn[] (...))] and args# is empty or consists of one keyword
        ;; when performing name objs# is [inst1 inst2] and args# is (arg1 arg_2 ...)
        (if (is-instance? (first objs#))
          (let [classes# (map instance-class objs#)
-               BFS_graphs# (map #(loop [acc# (list %) queue# acc#]
+               BFS_graphs_not_uniq# (map #(loop [acc# (list %) queue# acc#]
                                   (let [head# (first queue#) fathers# (super-class head#)]
                                     (if (empty? queue#) acc#
                                       (recur (concat acc# fathers#) (concat (rest queue#) fathers#)))))
                              classes#)
-               BFS_graphs# (map (fn [graph#] (distinct (remove #(= % ::Object) graph#))) BFS_graphs#)]
+               BFS_graphs# (map (fn [graph#] (distinct (remove #(= % ::Object) graph#))) BFS_graphs_not_uniq#)]
            (println "\n" BFS_graphs#)
            (apply perform-effective-command
-             (concat (list @vtable# BFS_graphs# (repeat (.size BFS_graphs#) 0) objs#) args#)))
-         (dosync (alter vtable# assoc (first objs#) (second objs#)))))))
+             (concat (list @vtable# @beforetable# @aftertable# BFS_graphs# (repeat (.size BFS_graphs#) 0) objs#) args#)))
+         (if (not (empty? args#))
+           (let [support-type# (first args#)]
+           (cond
+             (= support-type# :before) (dosync (alter beforetable# assoc (first objs#) (second objs#)))
+             (= support-type# :after) (dosync (alter aftertable# assoc (first objs#) (second objs#)))
+             true (assert false "Incorrect type of support")))
+           (dosync (alter vtable# assoc (first objs#) (second objs#))))))))
 
 
 (defmacro def-method [name objs_and_args & body]
@@ -31,13 +39,21 @@
     (assert (= objs (distinct objs)) (str "Identical names of the arguments of method " name "."))
     `(~name ['~classes (fn ~args ~@body)])))
 
+(defmacro def-support [type name objs_and_args & body]
+  (let [classes_objs (filter #(seq? %) objs_and_args)
+        objs (map #(second %) classes_objs)
+        classes (map #(first %) classes_objs)
+        args (vec (map #(if (seq? %) (second %) %) objs_and_args))]
+    (assert (= objs (distinct objs)) (str "Identical names of the arguments of method " name "."))
+    `(~name ['~classes (fn ~args ~@body)] '~type)))
+
 ;; dummy for call-next-method that is defined each time in perform-effective-command using 'binding.
 (def ^:dynamic call-next-method nil)
 
 (defn perform-effective-command
   "Performs the command whose virtual versions are all kept in vtable. The performance can go along all the classes
   of 'eff_classes' multiple inheritance queue created by def-generic if (call-next-method ...) is called."
-  [vtable BFS_graphs indices objs & args]
+  [vtable beforetable aftertable BFS_graphs indices objs & args]
   (let [classes (loop [i (dec (.size BFS_graphs))
                        classes '()]
                   (if (< i 0)
@@ -60,6 +76,6 @@
                   (if (= indices max_inds)
                     (fn [& x] (assert nil (str "(call-next-method) can not be called from a method if "
                                             "the classes of ALL its arguments are base.")))
-                    (partial perform-effective-command vtable BFS_graphs (inc-inds indices max_inds) objs))]
+                    (partial perform-effective-command vtable beforetable aftertable BFS_graphs (inc-inds indices max_inds) objs))]
           (dosync (apply (vtable eff_classes) (concat objs args)))))
-      (apply perform-effective-command (concat (list vtable BFS_graphs (inc-inds indices max_inds) objs) args)))))
+      (apply perform-effective-command (concat (list vtable beforetable aftertable BFS_graphs (inc-inds indices max_inds) objs) args)))))

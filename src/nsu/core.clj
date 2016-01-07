@@ -34,6 +34,9 @@
   (def-method ride [(:B1 obj1) (:A2 obj2) (:B3 obj3) arg1 & arg2] (println :B1 :A2 :B3 arg1 arg2) (call-next-method arg1 arg2))
   (def-method ride [(:B1 obj1) (:B2 obj2) (:A3 obj3) arg1 & arg2] (println :B1 :B2 :A3 arg1 arg2) (call-next-method arg1 arg2))
   (def-method ride [(:B1 obj1) (:B2 obj2) (:B3 obj3) arg1 & arg2] (println :B1 :B2 :B3 arg1 arg2) (call-next-method arg1 arg2))
+  
+  (def-support :before ride [(:A1 obj1) (:A2 obj2) (:A3 obj3) arg1 & arg2]
+    (println "support method was called"))
 
   (def-class :A () ())
   (def-class :B (:A) ())
