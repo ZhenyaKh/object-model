@@ -16,10 +16,6 @@
   [class]
   (get (get @classes-hierarchy class) ::super))
 
-(defn init [field value & map]
-  "init section for class-def"
-  {:init (apply hash-map field value map)})
-
 (defn get-all-fields [сlass]
   "Extracts all fields of the class including all predecessor"
   (let [class-def (get @classes-hierarchy сlass)
@@ -94,3 +90,4 @@
 
 (load "objectmodel_method_def")
 (load "objectmodel_introspection")
+(load "objectmodel_utils")
