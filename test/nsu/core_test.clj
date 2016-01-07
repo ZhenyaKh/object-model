@@ -56,8 +56,8 @@
 
 (deftest test-1
   (testing "test-1"
-    (is (= (m1 d) `(:D :B :C :A)))
-    (is (= (m2 d "test") `((:D "test") (:C "test") :A "test(after C)")))
+    (is (= (m1 [d]) `(:D :B :C :A)))
+    (is (= (m2 [d] "test") `((:D "test") (:C "test") :A "test(after C)")))
     (is (= 42 (getf d :a3)))
     (is (do
           (setf d :a3 24)
@@ -90,6 +90,96 @@
 (deftest test-2
   (testing "test-2"
     (def names_collector (ref '()))
-    (classes-names instance names_collector)
+    (classes-names [instance] names_collector)
     (println @names_collector)
     (is (= @names_collector '(:M :J :K :L :H :I :F :G)))))
+
+; test-3
+
+(def-class :A1 () ())
+(def-class :B1 (:A1) ())
+(def-class :A2 () ())
+(def-class :B2 (:A2) ())
+(def-class :A3 () ())
+(def-class :B3 (:A3) ())
+
+(def-generic ride)
+(def-method ride [(:A1 obj1) (:A2 obj2) (:A3 obj3) arg1 & arg2] (println :A1 :A2 :A3 arg1 arg2))
+(def-method ride [(:A1 obj1) (:A2 obj2) (:B3 obj3) arg1 & arg2] (println :A1 :A2 :B3 arg1 arg2) (call-next-method arg1 arg2))
+(def-method ride [(:A1 obj1) (:B2 obj2) (:A3 obj3) arg1 & arg2] (println :A1 :B2 :A3 arg1 arg2) (call-next-method arg1 arg2))
+(def-method ride [(:A1 obj1) (:B2 obj2) (:B3 obj3) arg1 & arg2] (println :A1 :B2 :B3 arg1 arg2) (call-next-method arg1 arg2))
+(def-method ride [(:B1 obj1) (:A2 obj2) (:A3 obj3) arg1 & arg2] (println :B1 :A2 :A3 arg1 arg2) (call-next-method arg1 arg2))
+(def-method ride [(:B1 obj1) (:A2 obj2) (:B3 obj3) arg1 & arg2] (println :B1 :A2 :B3 arg1 arg2) (call-next-method arg1 arg2))
+(def-method ride [(:B1 obj1) (:B2 obj2) (:A3 obj3) arg1 & arg2] (println :B1 :B2 :A3 arg1 arg2) (call-next-method arg1 arg2))
+(def-method ride [(:B1 obj1) (:B2 obj2) (:B3 obj3) arg1 & arg2] (println :B1 :B2 :B3 arg1 arg2) (call-next-method arg1 arg2))
+  
+(def-support :before ride [(:A1 obj1) (:A2 obj2) (:A3 obj3) arg1 & arg2] (println "support method was called"))
+
+(def e1 (new-instance :B1))
+(def e2 (new-instance :B2))
+(def e3 (new-instance :B3))
+
+; test-4
+
+(def-class :pA () ())
+(def-class :pB (:pA) ())
+(def-class :pC (:pA) ())
+(def-class :pD (:pB :pC) ())
+(def-class :pE () ())
+(def-class :pX (:pE) ())
+(def-class :pF (:pX) ())
+(def-class :pG (:pX) ())
+(def-class :pH (:pF :pG) ())
+
+(def-method ride [(:pA obj1) (:pE obj) arg1 arg2] (println :pA :pE arg1 arg2 obj1 obj))
+(def-method ride [(:pA obj1) (:pF obj) arg1 arg2] (println :pA :pF arg1 arg2 obj1 obj) (call-next-method arg1 arg2))
+(def-method ride [(:pA obj1) (:pG obj) arg1 arg2] (println :pA :pG arg1 arg2 obj1 obj) (call-next-method arg1 arg2))
+(def-method ride [(:pA obj1) (:pH obj) arg1 arg2] (println :pA :pH arg1 arg2 obj1 obj) (call-next-method arg1 arg2))
+(def-method ride [(:pB obj1) (:pE obj) arg1 arg2] (println :pB :pE arg1 arg2 obj1 obj) (call-next-method arg1 arg2))
+(def-method ride [(:pB obj1) (:pF obj) arg1 arg2] (println :pB :pF arg1 arg2 obj1 obj) (call-next-method arg1 arg2))
+(def-method ride [(:pB obj1) (:pG obj2) arg1 arg2] (println :pB :pG arg1 arg2 obj1 obj2) (call-next-method arg1 arg2))
+(def-method ride [(:pB obj1) (:pH obj2) arg1 arg2] (println :pB :pH arg1 arg2 obj1 obj2) (call-next-method arg1 arg2))
+(def-method ride [(:pC obj1) (:pE obj2) arg1 arg2] (println :pC :pE arg1 arg2 obj1 obj2) (call-next-method arg1 arg2))
+(def-method ride [(:pC obj1) (:pF obj2) arg1 arg2] (println :pC :pF arg1 arg2 obj1 obj2) (call-next-method arg1 arg2))
+(def-method ride [(:pC obj1) (:pG obj2) arg1 arg2] (println :pC :pG arg1 arg2 obj1 obj2) (call-next-method arg1 arg2))
+(def-method ride [(:pC obj1) (:pH obj2) arg1 arg2] (println :pC :pH arg1 arg2 obj1 obj2) (call-next-method arg1 arg2))
+(def-method ride [(:pD obj1) (:pE obj2) arg1 arg2] (println :pD :pE arg1 arg2 obj1 obj2) (call-next-method arg1 arg2))
+(def-method ride [(:pD obj1) (:pF obj2) arg1 arg2] (println :pD :pF arg1 arg2 obj1 obj2) (call-next-method arg1 arg2))
+(def-method ride [(:pD obj1) (:pG obj2) arg1 arg2] (println :pD :pG arg1 arg2 obj1 obj2) (call-next-method arg1 arg2))
+(def-method ride [(:pD obj1) (:pH obj2) arg1 arg2] (println :pD :pH arg1 arg2 obj1 obj2) (call-next-method arg1 arg2))
+(def-method ride [(:pA obj1) (:pX obj2) arg1 arg2] (println :pA :pX arg1 arg2 obj1 obj2) (call-next-method arg1 arg2))
+(def-method ride [(:pB obj1) (:pX obj2) arg1 arg2] (println :pB :pX arg1 arg2 obj1 obj2) (call-next-method arg1 arg2))
+(def-method ride [(:pC obj1) (:pX obj2) arg1 arg2] (println :pC :pX arg1 arg2 obj1 obj2) (call-next-method arg1 arg2))
+(def-method ride [(:pD obj1) (:pX obj2) arg1 arg2] (println :pD :pX arg1 arg2 obj1 obj2) (call-next-method arg1 arg2))
+
+(def inst1 (new-instance :D))
+(def inst2 (new-instance :H))
+
+; test-5
+
+(def-class :pI () ())
+(def-class :pJ (:pI) ())
+(def-class :pK (:pI) ())
+(def-class :pL (:pI) ())
+(def-class :pM (:pJ :pK) ())
+(def-class :pN (:pL) ())
+(def-class :pO (:pL) ())
+(def-class :pP (:pM :pN :pO) ())
+; BFS = ({:P} {:M :N :O} {:J :K :L} {:I}), {..} means a common tree level.
+
+(def e (new-instance :P))
+
+(def-method ride [(:pI obj)] (println :pI))
+(def-method ride [(:pJ obj)] (call-next-method) (println :pJ))
+(def-method ride [(:pK obj)] (println :pK) (call-next-method))
+(def-method ride [(:pL obj)] (println :pL) (call-next-method))
+(def-method ride [(:pM obj)] (println :pM) (call-next-method))
+(def-method ride [(:pN obj)] (println :pN) (call-next-method))
+(def-method ride [(:pO obj)] (println :pO) (call-next-method))
+(def-method ride [(:pP obj)] (println :pP) (call-next-method))
+
+(deftest test-3
+  (testing "test-3"
+           (ride [e])
+           (ride [inst1 inst2] "arg_1" "arg_2")
+           (ride [e1 e2 e3] "arg_1" "arg_2")))
