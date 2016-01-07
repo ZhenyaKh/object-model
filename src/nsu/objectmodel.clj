@@ -47,23 +47,6 @@
         class-init)
       class-init)))
 
-(defn def-getter [field]
-  "defines a piece of code for getter"
-  {:pre [(keyword? field)]}
-  `(defn ~(symbol (str "get-" (name field))) [object#]
-   (let [state# (get object# ::state)]
-     (assert (contains? state# ~field) "getf: no such field.")
-     @(get state# ~field))))
-
-
-(defn def-setter [field]
-  "defines a piece of code for setter"
-  {:pre [(keyword? field)]}
-  `(defn ~(symbol (str "set-" (name field))) [object# new-value#]
-     (let [state# (get object# ::state)]
-       (assert (contains? state# ~field) "setf: no such field.")
-       (dosync (ref-set (get state# ~field) new-value#)))))
-
 (defmacro def-class [name supers fields & sections]
   "This macro creates a class declaration."
   (let [sections (apply merge (map eval sections))
