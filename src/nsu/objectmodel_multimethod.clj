@@ -1,9 +1,7 @@
 (in-ns 'nsu.objectmodel)
 
 (defmacro def-generic
-  "This macro creates the command ~name that either adds a new virtual version of method ~name to
-  the command virtual table or calls the already added version of ~name using perform-effective-command.
-  For the latter a multiple inheritance queue 'eff_classes' of classes having the ~name method implemented is created."
+  "This macro declares a multimethod ~name."
   [name]
   `(let [vtable# (ref {})
          beforetable# (ref {})
@@ -13,11 +11,13 @@
        ;; when performing name objs# is [inst1 inst2] and args# is (arg1 arg_2 ...)
        (if (is-instance? (first objs#))
          (let [classes# (map instance-class objs#)
+               ;; For each parameter class we build a Breadth-first search graph of its predecessors. So we have a list of graphs.
                BFS_graphs_not_uniq# (map #(loop [acc# (list %) queue# acc#]
                                   (let [head# (first queue#) fathers# (super-class head#)]
                                     (if (empty? queue#) acc#
                                       (recur (concat acc# fathers#) (concat (rest queue#) fathers#)))))
                              classes#)
+               ;; For each graph we make all its classes-vertices distinct and remove all ::Object entries.
                BFS_graphs# (map (fn [graph#] (distinct (remove #(= % ::Object) graph#))) BFS_graphs_not_uniq#)]
            (println "\n" BFS_graphs#)
            (apply perform-effective-command
@@ -27,11 +27,13 @@
            (cond
              (= support-type# :before) (dosync (alter beforetable# assoc (first objs#) (second objs#)))
              (= support-type# :after) (dosync (alter aftertable# assoc (first objs#) (second objs#)))
-             true (assert false "Incorrect type of support")))
-           (dosync (alter vtable# assoc (first objs#) (second objs#))))))))
+             true (assert false "Incorrect type of support."))
+           ;; we add a new version of ~name multimethod to its virtual table.
+           (dosync (alter vtable# assoc (first objs#) (second objs#)))))))))
 
-
-(defmacro def-method [name objs_and_args & body]
+(defmacro def-method
+  "This macro defines a particular version of the multimethod ~name."
+  [name objs_and_args & body]
   (let [classes_objs (filter #(seq? %) objs_and_args)
         objs (map #(second %) classes_objs)
         classes (map #(first %) classes_objs)
@@ -40,6 +42,7 @@
     `(~name ['~classes (fn ~args ~@body)])))
 
 (defmacro def-support [type name objs_and_args & body]
+  ;; TODO: add some docs here.
   (let [classes_objs (filter #(seq? %) objs_and_args)
         objs (map #(second %) classes_objs)
         classes (map #(first %) classes_objs)
@@ -51,8 +54,8 @@
 (def ^:dynamic call-next-method nil)
 
 (defn perform-effective-command
-  "Performs the command whose virtual versions are all kept in vtable. The performance can go along all the classes
-  of 'eff_classes' multiple inheritance queue created by def-generic if (call-next-method ...) is called."
+  "perform-effective-command performs the multimethod whose virtual versions are all kept in vtable.
+   It is recursive and can be called explicitly by a user with (call-next-method ...) construction."
   [vtable beforetable aftertable BFS_graphs indices objs & args]
   (let [classes (loop [i (dec (.size BFS_graphs))
                        classes '()]
@@ -69,13 +72,12 @@
                           (if (< index  max_index)
                             (concat (drop-last sub_inds) [(inc index)])
                             (concat (self (drop-last sub_inds) (drop-last sub_max_inds)) [0])))))]
-   ; (println BFS_graphs indices objs)
     (if (contains? vtable classes)
       (let [eff_classes classes]
         (binding [call-next-method
                   (if (= indices max_inds)
                     (fn [& x] (assert nil (str "(call-next-method) can not be called from a method if "
-                                            "the classes of ALL its arguments are base.")))
+                                               "the classes of ALL its arguments are base.")))
                     (partial perform-effective-command vtable beforetable aftertable BFS_graphs (inc-inds indices max_inds) objs))]
           (dosync (apply (vtable eff_classes) (concat objs args)))))
       (apply perform-effective-command (concat (list vtable beforetable aftertable BFS_graphs (inc-inds indices max_inds) objs) args)))))

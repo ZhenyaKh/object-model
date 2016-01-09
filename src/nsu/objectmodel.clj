@@ -92,6 +92,6 @@
     (assert (contains? state field))
     (dosync (ref-set (state field) new_value))))
 
-(load "objectmodel_method_def")
+(load "objectmodel_multimethod")
 (load "objectmodel_introspection")
 
