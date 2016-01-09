@@ -27,9 +27,9 @@
            (cond
              (= support-type# :before) (dosync (alter beforetable# assoc (first objs#) (second objs#)))
              (= support-type# :after) (dosync (alter aftertable# assoc (first objs#) (second objs#)))
-             true (assert false "Incorrect type of support."))
+             true (assert false "Incorrect type of support.")))
            ;; we add a new version of ~name multimethod to its virtual table.
-           (dosync (alter vtable# assoc (first objs#) (second objs#)))))))))
+           (dosync (alter vtable# assoc (first objs#) (second objs#))))))))
 
 (defmacro def-method
   "This macro defines a particular version of the multimethod ~name."
