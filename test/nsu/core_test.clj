@@ -112,7 +112,7 @@
 (def-method ride [(:B1 obj1) (:A2 obj2) (:B3 obj3) arg1 & arg2] (println :B1 :A2 :B3 arg1 arg2) (call-next-method arg1 arg2))
 (def-method ride [(:B1 obj1) (:B2 obj2) (:A3 obj3) arg1 & arg2] (println :B1 :B2 :A3 arg1 arg2) (call-next-method arg1 arg2))
 (def-method ride [(:B1 obj1) (:B2 obj2) (:B3 obj3) arg1 & arg2] (println :B1 :B2 :B3 arg1 arg2) (call-next-method arg1 arg2))
-  
+
 (def-support :before ride [(:A1 obj1) (:A2 obj2) (:A3 obj3) arg1 & arg2] (println "support method was called"))
 
 (def e1 (new-instance :B1))
@@ -152,8 +152,8 @@
 (def-method ride [(:pC obj1) (:pX obj2) arg1 arg2] (println :pC :pX arg1 arg2 obj1 obj2) (call-next-method arg1 arg2))
 (def-method ride [(:pD obj1) (:pX obj2) arg1 arg2] (println :pD :pX arg1 arg2 obj1 obj2) (call-next-method arg1 arg2))
 
-(def inst1 (new-instance :D))
-(def inst2 (new-instance :H))
+(def inst1 (new-instance :pD))
+(def inst2 (new-instance :pH))
 
 ; test-5
 
@@ -167,7 +167,7 @@
 (def-class :pP (:pM :pN :pO) ())
 ; BFS = ({:P} {:M :N :O} {:J :K :L} {:I}), {..} means a common tree level.
 
-(def e (new-instance :P))
+(def e (new-instance :pP))
 
 (def-method ride [(:pI obj)] (println :pI))
 (def-method ride [(:pJ obj)] (call-next-method) (println :pJ))
