@@ -1,6 +1,6 @@
 (ns nsu.objectmodel
   "In this namespace we implemented all methods and macroses to create
-  the multiple inheritance object model resenbling on of Common Lisp"
+   the multiple inheritance object model resenbling on of Common Lisp"
   (:gen-class))
 
 (use 'clojure.set)
@@ -16,33 +16,6 @@
   [class]
   (get (get @classes-hierarchy class) ::super))
 
-(defn get-all-fields [сlass]
-  "Extracts all fields of the class including all predecessor"
-  (let [class-def (get @classes-hierarchy сlass)
-        class-fields (get class-def ::fields)
-        supers (super-class сlass)]
-    (if (not (nil? supers))
-      (union
-        class-fields
-        (apply union (map
-                       (fn [super] (get-all-fields super))
-                       supers)))
-      class-fields)))
-
-(defn get-all-inits [сlass]
-  "Extracts all default values of the class including all predecessor.
-  Successor overrides values set up in predecessor"
-  (let [class-def (get @classes-hierarchy сlass)
-        class-init (get class-def ::init)
-        supers (super-class сlass)]
-    (if (not (nil? supers))
-      (merge
-        (apply merge (map
-                       (fn [super] (get-all-inits super))
-                       supers))
-        class-init)
-      class-init)))
-
 (defmacro def-class [name supers fields & sections]
   "This macro creates a class declaration."
   (let [sections (apply merge (map eval sections))
@@ -57,6 +30,37 @@
          (alter classes-hierarchy assoc ~name {::super super#
                                               ::fields fields#
                                               ::init '~init})))))
+(defn init [field value & map]
+  "The function allows a user to fill in the init section of a class when defining it with def-class."
+  {:init (apply hash-map field value map)})
+
+(defn get-all-fields [сlass]
+  "Extracts all fields of the class including those of the predecessor classes."
+  (let [class-def (get @classes-hierarchy сlass)
+        class-fields (get class-def ::fields)
+        supers (super-class сlass)]
+    (if (not (nil? supers))
+      (union
+        class-fields
+        (apply union (map
+                       (fn [super] (get-all-fields super))
+                       supers)))
+      class-fields)))
+
+(defn get-all-inits [сlass]
+  "Extracts all default values of the class including those of the predecessor classes.
+   Successor overrides values set up in predecessor."
+  (let [class-def (get @classes-hierarchy сlass)
+        class-init (get class-def ::init)
+        supers (super-class сlass)]
+    (if (not (nil? supers))
+      (merge
+        (apply merge (map
+                       (fn [super] (get-all-inits super))
+                       supers))
+        class-init)
+      class-init)))
+
 (defn new-instance
   "Creates an instance of the class."
   [class & fields_values]
@@ -75,14 +79,14 @@
     {::class class, ::state state}))
 
 (defn getf
-  "This is the getter (common for all classes)."
+  "This is the getter common for all classes."
   [obj field]
   (let [state (obj ::state)]
     (assert (contains? state field) "getf: no such field.")
     (deref (state field))))
 
 (defn setf
-  "This is the setter (common for all classes)."
+  "This is the setter common for all classes."
   [obj field new_value]
   (let [state (obj ::state)]
     (assert (contains? state field))
@@ -90,4 +94,4 @@
 
 (load "objectmodel_method_def")
 (load "objectmodel_introspection")
-(load "objectmodel_utils")
+
