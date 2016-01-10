@@ -1,0 +1,5 @@
+(defclass A () ())
+(defclass B (A) ())
+(defclass C (A) ())
+(defclass D (A B C) ())
+;(defclass E (A B C D) ())
