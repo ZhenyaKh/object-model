@@ -26,7 +26,8 @@
            fields# (set '~fields)]
        ; registering a new class in classes-hierarchy
        (dosync
-         (assert (not (contains? @classes-hierarchy ~name)) (format "Forbidden new class name %s." ~name))
+         (assert (not (contains? @classes-hierarchy ~name)) 
+                 (format "Forbidden new class name %s." ~name))
          (alter classes-hierarchy assoc ~name {::super super#
                                               ::fields fields#
                                               ::init '~init})))))

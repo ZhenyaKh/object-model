@@ -7,26 +7,31 @@
          beforetable# (ref {})
          aftertable# (ref {})]
      (defn ~name [objs# & args#]
-       ;; when defining method name objs# is [(:A1 A2) (fn[] (...))] and args# is empty or consists of one keyword
-       ;; when performing name objs# is [inst1 inst2] and args# is (arg1 arg_2 ...)
+       ;; When defining method name objs# is [(:A1 A2) (fn[] (...))] and args# 
+       ;; is empty or consists of one keyword.
+       ;; When performing name objs# is [inst1 inst2] and args# is (arg1 arg_2 ...).
        (if (is-instance? (first objs#))
          (let [classes# (map instance-class objs#)
-               ;; For each parameter class we build a Breadth-first search graph of its predecessors. So we have a list of graphs.
+               ;; For each parameter class we build a Breadth-first search graph of its predecessors.
+               ;; So we have a list of graphs.
                BFS_graphs_not_uniq# (map #(loop [acc# (list %) queue# acc#]
-                                  (let [head# (first queue#) fathers# (super-class head#)]
-                                    (if (empty? queue#) acc#
-                                      (recur (concat acc# fathers#) (concat (rest queue#) fathers#)))))
+                                 (let [head# (first queue#) fathers# (super-class head#)]
+                                   (if (empty? queue#) acc#
+                                     (recur (concat acc# fathers#) (concat (rest queue#) fathers#)))))
                              classes#)
-               ;; For each graph we make all its classes-vertices distinct and remove all ::Object entries.
-               BFS_graphs# (map (fn [graph#] (distinct (remove #(= % ::Object) graph#))) BFS_graphs_not_uniq#)]
+               ;; For each graph we make all its classes-vertices distinct and 
+               ;; remove all ::Object entries.
+               BFS_graphs# (map (fn [graph#] (distinct (remove #(= % ::Object) graph#))) 
+                                BFS_graphs_not_uniq#)]
            (apply perform-effective-command
-             (concat (list @vtable# @beforetable# @aftertable# BFS_graphs# (repeat (.size BFS_graphs#) 0) objs#) args#)))
+             (concat (list @vtable# @beforetable# @aftertable# 
+                         BFS_graphs# (repeat (.size BFS_graphs#) 0) objs#) args#)))
          (if (not (empty? args#))
            (let [support-type# (first args#)]
            (cond
-             (= support-type# :before) (dosync (alter beforetable# assoc (first objs#) (second objs#)))
-             (= support-type# :after) (dosync (alter aftertable# assoc (first objs#) (second objs#)))
-             true (assert false "Incorrect type of support.")))
+            (= support-type# :before) (dosync (alter beforetable# assoc (first objs#) (second objs#)))
+            (= support-type# :after) (dosync (alter aftertable# assoc (first objs#) (second objs#)))
+            true (assert false "Incorrect type of support.")))
            ;; we add a new version of ~name multimethod to its virtual table.
            (dosync (alter vtable# assoc (first objs#) (second objs#))))))))
 
@@ -75,8 +80,11 @@
       (let [eff_classes classes]
         (binding [call-next-method
                   (if (= indices max_inds)
-                    (fn [& x] (assert nil (str "(call-next-method) can not be called from a method if "
+                    (fn [& x] (assert nil (str "(call-next-method) can not be called from a method if"
                                                "the classes of ALL its arguments are base.")))
-                    (partial perform-effective-command vtable beforetable aftertable BFS_graphs (inc-inds indices max_inds) objs))]
+                    (partial perform-effective-command vtable beforetable aftertable 
+                                              BFS_graphs (inc-inds indices max_inds) objs))]
           (dosync (apply (vtable eff_classes) (concat objs args)))))
-      (apply perform-effective-command (concat (list vtable beforetable aftertable BFS_graphs (inc-inds indices max_inds) objs) args)))))
+      (apply perform-effective-command (concat (list vtable beforetable aftertable 
+                              BFS_graphs (inc-inds indices max_inds) objs) args)))))
+
