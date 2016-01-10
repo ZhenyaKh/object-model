@@ -19,7 +19,6 @@
                              classes#)
                ;; For each graph we make all its classes-vertices distinct and remove all ::Object entries.
                BFS_graphs# (map (fn [graph#] (distinct (remove #(= % ::Object) graph#))) BFS_graphs_not_uniq#)]
-           (println "\n" BFS_graphs#)
            (apply perform-effective-command
              (concat (list @vtable# @beforetable# @aftertable# BFS_graphs# (repeat (.size BFS_graphs#) 0) objs#) args#)))
          (if (not (empty? args#))
