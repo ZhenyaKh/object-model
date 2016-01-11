@@ -22,7 +22,8 @@
                BFS_graphs_not_uniq# (map #(loop [acc# (list %) queue# acc#]
                                             (let [head# (first queue#) fathers# (super-class head#)]
                                               (if (empty? queue#) acc#
-                                                (recur (concat acc# fathers#) (concat (rest queue#) fathers#)))))
+                                                (recur (concat acc# fathers#) 
+                                                       (concat (rest queue#) fathers#)))))
                                       classes#)
                ;; For each graph we make all its classes-vertices distinct and 
                ;; remove all ::Object entries.
@@ -30,22 +31,18 @@
                              BFS_graphs_not_uniq#)
                max_inds# (map #(dec (.size %)) BFS_graphs#)
                graphs_number# (.size BFS_graphs#)]
-           (when (not (empty? @beforetable#))
-             (apply perform-effective-before-after (concat (list @beforetable# BFS_graphs#
-                                                             (repeat graphs_number# 0) max_inds# inc-inds objs#) args#)))
-           (let [result#
-                  (apply perform-effective-command (concat (list @primarytable# BFS_graphs#
-                                                             (repeat graphs_number# 0) max_inds# inc-inds objs#) args#))]
-           (when (not (empty? @aftertable#))
-             (apply perform-effective-before-after (concat (list @aftertable# BFS_graphs#
-                                                             max_inds# max_inds# dec-inds objs#) args#)))
-           result#))
+           (apply perform-effective-around 
+               (concat (list aroundtable# beforetable# primarytable# aftertable#
+                   BFS_graphs# (repeat graphs_number# 0) max_inds# inc-inds objs#) args#)))
          (if (not (empty? args#))
            (let [support-type# (first args#)]
              (cond
-               (= support-type# :around) (dosync (alter aroundtable# assoc (first objs#) (second objs#)))
-               (= support-type# :before) (dosync (alter beforetable# assoc (first objs#) (second objs#)))
-               (= support-type# :after)  (dosync (alter aftertable# assoc (first objs#) (second objs#)))
+               (= support-type# :around) 
+                   (dosync (alter aroundtable# assoc (first objs#) (second objs#)))
+               (= support-type# :before) 
+                   (dosync (alter beforetable# assoc (first objs#) (second objs#)))
+               (= support-type# :after)  
+                   (dosync (alter aftertable# assoc (first objs#) (second objs#)))
                true (assert false "Incorrect type of support.")))
            ;; we add a new version of ~name multimethod to its virtual table.
            (dosync (alter primarytable# assoc (first objs#) (second objs#))))))))
@@ -61,7 +58,8 @@
     `(~name ['~classes (fn ~args ~@body)])))
 
 (defmacro def-support [type name objs_and_args & body]
-  "This macro defines support method to corresponding multimethod ~name with specified type: around, before or after"
+  "This macro defines support method to corresponding multimethod ~name 
+   with specified type: around, before or after"
   (let [classes_objs (filter #(seq? %) objs_and_args)
         objs (map #(second %) classes_objs)
         classes (map #(first %) classes_objs)
@@ -97,7 +95,23 @@
       (dosync (apply (vtable classes) (concat objs args))))
     (when (not (= indices (if (= inds-changer inc-inds) indices_to (repeat graphs_number 0))))
       (apply perform-effective-before-after (concat (list vtable BFS_graphs
-                                                      (inds-changer indices indices_to) indices_to inds-changer objs) args)))))
+                             (inds-changer indices indices_to) indices_to inds-changer objs) args)))))
+
+(defn perform-effective-around
+  ;; TODO: some docs here.
+  [aroundtable beforetable primarytable aftertable 
+   BFS_graphs indices indices_to inds-changer objs & args]
+  (let [graphs_number (.size BFS_graphs)]
+    (when (not (empty? @beforetable))
+      (apply perform-effective-before-after (concat (list @beforetable BFS_graphs
+                                  (repeat graphs_number 0) indices_to inc-inds objs) args)))
+           (let [result
+                  (apply perform-effective-command (concat (list @primarytable BFS_graphs
+                                  (repeat graphs_number 0) indices_to inc-inds objs) args))]
+           (when (not (empty? @aftertable))
+             (apply perform-effective-before-after (concat (list @aftertable BFS_graphs
+                                  indices_to indices_to dec-inds objs) args)))
+           result)))
 
 (defn get-classes-from-graphs
   ;; TODO: some docs here.
@@ -130,3 +144,4 @@
       (if (> index  0)
         (concat (drop-last sub_inds) [(dec index)])
         (concat (dec-inds (drop-last sub_inds) (drop-last sub_max_inds)) [max_index])))))
+
