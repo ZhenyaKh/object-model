@@ -41,21 +41,21 @@
                BFS_graphs# (map (fn [graph#] (distinct (remove #(= % ::Object) graph#))) 
                                 BFS_graphs_not_uniq#)
                max_inds# (map #(dec (.size %)) BFS_graphs#)]
-           ;(apply perform-effective-command
-           ;  (concat (list @beforetable# BFS_graphs# 
-           ;              (repeat (.size BFS_graphs#) 0) max_inds# inc-inds objs#) args#)))
+           (when (not (empty? @beforetable#)) 
+             (apply perform-effective-command (concat (list @beforetable# BFS_graphs# 
+                         (repeat (.size BFS_graphs#) 0) max_inds# inc-inds objs#) args#)))
            (apply perform-effective-command
              (concat (list @primarytable# BFS_graphs# 
-                         (repeat (.size BFS_graphs#) 0) max_inds# inc-inds objs#) args#)))
-           ;(apply perform-effective-command
-           ;  (concat (list @aftertable# BFS_graphs# 
-           ;              max_inds# max_inds# dec-inds objs#) args#)))
+                         (repeat (.size BFS_graphs#) 0) max_inds# inc-inds objs#) args#))
+           (when (not (empty? @aftertable#)) 
+             (apply perform-effective-command (concat (list @aftertable# BFS_graphs# 
+                              max_inds# max_inds# dec-inds objs#) args#))))
          (if (not (empty? args#))
            (let [support-type# (first args#)]
            (cond
 		    (= support-type# :around) (dosync (alter aroundtable# assoc (first objs#) (second objs#)))
             (= support-type# :before) (dosync (alter beforetable# assoc (first objs#) (second objs#)))
-            (= support-type# :after) (dosync (alter aftertable# assoc (first objs#) (second objs#)))
+            (= support-type# :after)  (dosync (alter aftertable# assoc (first objs#) (second objs#)))
             true (assert false "Incorrect type of support.")))
            ;; we add a new version of ~name multimethod to its virtual table.
            (dosync (alter primarytable# assoc (first objs#) (second objs#))))))))
@@ -86,7 +86,6 @@
   "perform-effective-command performs the multimethod whose virtual versions are all kept in vtable.
    It is recursive and can be called explicitly by a user with (call-next-method ...) construction."
   [vtable BFS_graphs indices indices_to inds-changer objs & args]
-  (println "VTABLE: \n\n" vtable "\n")
   (let [classes (loop [i (dec (.size BFS_graphs))
                        classes '()]
                   (if (< i 0)

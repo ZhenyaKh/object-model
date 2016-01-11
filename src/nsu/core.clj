@@ -96,11 +96,16 @@
   (println "-main")
 
   (capabilities [t-90])
+  (println)
   
   (ride [monkey my-bicycle])
+  (println)
   (ride [monkey t-90])
+  (println)
   (ride [anonymous il-86])
+  (println)
   (ride [pirx il-86])
+  (println)
 ; Expected output:
 
 ; T-90 allows to:
