@@ -6,7 +6,7 @@
   (if (empty? sub_inds) '()
     (if (< index  max_index)
       (concat (drop-last sub_inds) [(inc index)])
-      (concat (self (drop-last sub_inds) (drop-last sub_max_inds)) [0])))))
+      (concat (inc-inds (drop-last sub_inds) (drop-last sub_max_inds)) [0])))))
 
 (defmacro def-generic
   "This macro declares a multimethod ~name."
