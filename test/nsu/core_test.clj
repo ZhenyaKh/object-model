@@ -258,6 +258,7 @@
                   ":pA :pG arg_1 arg_2 :pD :pH \n"
                   ":pA :pX arg_1 arg_2 :pD :pH \n"
                   ":pA :pE arg_1 arg_2 :pD :pH \n")))))
+
 ; test-5
 
 (def-class :pI () ())
@@ -286,4 +287,3 @@
     (def s "")
     (ride [e])
     (is (= s ":pP :pM :pN :pO :pK :pL :pI :pJ "))))
-
