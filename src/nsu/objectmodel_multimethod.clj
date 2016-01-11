@@ -48,7 +48,7 @@
     `(~name ['~classes (fn ~args ~@body)])))
 
 (defmacro def-support [type name objs_and_args & body]
-  ;; TODO: add some docs here.
+  "This macro defines support method to corresponding multimethod ~name with specified type: around, before or after"
   (let [classes_objs (filter #(seq? %) objs_and_args)
         objs (map #(second %) classes_objs)
         classes (map #(first %) classes_objs)
