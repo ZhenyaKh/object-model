@@ -11,7 +11,7 @@
 (defmacro def-generic
   "This macro declares a multimethod ~name."
   [name]
-  `(let [vtable# (ref {})
+  `(let [primarytable# (ref {})
 		 aroundtable# (ref {})
          beforetable# (ref {})
          aftertable# (ref {})]
@@ -33,8 +33,7 @@
                BFS_graphs# (map (fn [graph#] (distinct (remove #(= % ::Object) graph#))) 
                                 BFS_graphs_not_uniq#)]
            (apply perform-effective-command
-             (concat (list @vtable# @beforetable# @aftertable# 
-                         BFS_graphs# (repeat (.size BFS_graphs#) 0) objs#) args#)))
+             (concat (list @primarytable# BFS_graphs# (repeat (.size BFS_graphs#) 0) inc-inds objs#) args#)))
          (if (not (empty? args#))
            (let [support-type# (first args#)]
            (cond
@@ -43,7 +42,7 @@
             (= support-type# :after) (dosync (alter aftertable# assoc (first objs#) (second objs#)))
             true (assert false "Incorrect type of support.")))
            ;; we add a new version of ~name multimethod to its virtual table.
-           (dosync (alter vtable# assoc (first objs#) (second objs#))))))))
+           (dosync (alter primarytable# assoc (first objs#) (second objs#))))))))
 
 (defmacro def-method
   "This macro defines a particular version of the multimethod ~name."
@@ -70,7 +69,7 @@
 (defn perform-effective-command
   "perform-effective-command performs the multimethod whose virtual versions are all kept in vtable.
    It is recursive and can be called explicitly by a user with (call-next-method ...) construction."
-  [vtable aroundtable beforetable aftertable BFS_graphs indices objs & args]
+  [vtable BFS_graphs indices inds-changer objs & args]
   (let [classes (loop [i (dec (.size BFS_graphs))
                        classes '()]
                   (if (< i 0)
@@ -85,9 +84,8 @@
                   (if (= indices max_inds)
                     (fn [& x] (assert nil (str "(call-next-method) can not be called from a method if"
                                                "the classes of ALL its arguments are base.")))
-                    (partial perform-effective-command vtable aroundtable beforetable aftertable 
-                                              BFS_graphs (inc-inds indices max_inds) objs))]
+                    (partial perform-effective-command vtable BFS_graphs (inds-changer indices max_inds) inds-changer objs))]
           (dosync (apply (vtable eff_classes) (concat objs args)))))
-      (apply perform-effective-command (concat (list vtable aroundtable beforetable aftertable 
-                              BFS_graphs (inc-inds indices max_inds) objs) args)))))
+      (apply perform-effective-command
+	    (concat (list vtable BFS_graphs (inds-changer indices max_inds) inds-changer objs) args)))))
 
