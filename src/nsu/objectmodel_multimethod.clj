@@ -4,6 +4,7 @@
   "This macro declares a multimethod ~name."
   [name]
   `(let [vtable# (ref {})
+		 aroundtable# (ref {})
          beforetable# (ref {})
          aftertable# (ref {})]
      (defn ~name [objs# & args#]
@@ -29,6 +30,7 @@
          (if (not (empty? args#))
            (let [support-type# (first args#)]
            (cond
+		    (= support-type# :around) (dosync (alter aroundtable# assoc (first objs#) (second objs#)))
             (= support-type# :before) (dosync (alter beforetable# assoc (first objs#) (second objs#)))
             (= support-type# :after) (dosync (alter aftertable# assoc (first objs#) (second objs#)))
             true (assert false "Incorrect type of support.")))
@@ -60,7 +62,7 @@
 (defn perform-effective-command
   "perform-effective-command performs the multimethod whose virtual versions are all kept in vtable.
    It is recursive and can be called explicitly by a user with (call-next-method ...) construction."
-  [vtable beforetable aftertable BFS_graphs indices objs & args]
+  [vtable aroundtable beforetable aftertable BFS_graphs indices objs & args]
   (let [classes (loop [i (dec (.size BFS_graphs))
                        classes '()]
                   (if (< i 0)
@@ -82,9 +84,9 @@
                   (if (= indices max_inds)
                     (fn [& x] (assert nil (str "(call-next-method) can not be called from a method if"
                                                "the classes of ALL its arguments are base.")))
-                    (partial perform-effective-command vtable beforetable aftertable 
+                    (partial perform-effective-command vtable aroundtable beforetable aftertable 
                                               BFS_graphs (inc-inds indices max_inds) objs))]
           (dosync (apply (vtable eff_classes) (concat objs args)))))
-      (apply perform-effective-command (concat (list vtable beforetable aftertable 
+      (apply perform-effective-command (concat (list vtable aroundtable beforetable aftertable 
                               BFS_graphs (inc-inds indices max_inds) objs) args)))))
 
