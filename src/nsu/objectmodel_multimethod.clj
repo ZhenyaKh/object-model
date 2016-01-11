@@ -8,6 +8,14 @@
       (concat (drop-last sub_inds) [(inc index)])
       (concat (inc-inds (drop-last sub_inds) (drop-last sub_max_inds)) [0])))))
 
+(defn dec-inds [sub_inds sub_max_inds]
+  (let [index (last sub_inds)
+        max_index (last sub_max_inds)]
+  (if (empty? sub_inds) '()
+    (if (> index  0)
+      (concat (drop-last sub_inds) [(dec index)])
+      (concat (dec-inds (drop-last sub_inds) (drop-last sub_max_inds)) [max_index])))))
+
 (defmacro def-generic
   "This macro declares a multimethod ~name."
   [name]
@@ -33,9 +41,15 @@
                BFS_graphs# (map (fn [graph#] (distinct (remove #(= % ::Object) graph#))) 
                                 BFS_graphs_not_uniq#)
                max_inds# (map #(dec (.size %)) BFS_graphs#)]
+           ;(apply perform-effective-command
+           ;  (concat (list @beforetable# BFS_graphs# 
+           ;              (repeat (.size BFS_graphs#) 0) max_inds# inc-inds objs#) args#)))
            (apply perform-effective-command
              (concat (list @primarytable# BFS_graphs# 
-                           (repeat (.size BFS_graphs#) 0) max_inds# inc-inds objs#) args#)))
+                         (repeat (.size BFS_graphs#) 0) max_inds# inc-inds objs#) args#)))
+           ;(apply perform-effective-command
+           ;  (concat (list @aftertable# BFS_graphs# 
+           ;              max_inds# max_inds# dec-inds objs#) args#)))
          (if (not (empty? args#))
            (let [support-type# (first args#)]
            (cond
@@ -72,6 +86,7 @@
   "perform-effective-command performs the multimethod whose virtual versions are all kept in vtable.
    It is recursive and can be called explicitly by a user with (call-next-method ...) construction."
   [vtable BFS_graphs indices indices_to inds-changer objs & args]
+  (println "VTABLE: \n\n" vtable "\n")
   (let [classes (loop [i (dec (.size BFS_graphs))
                        classes '()]
                   (if (< i 0)
