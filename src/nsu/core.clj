@@ -22,7 +22,7 @@
 
 (def-class :AnimalDriver (:Driver) ())
 (def-class :HumanDriver (:Driver) ())
-(def-class :PilotDriver (:HumanDriver) ())
+(def-class :Pilot (:HumanDriver) ())
 
 ;; Methods
 
@@ -46,19 +46,19 @@
 (def-generic ride)
 
 (def-method ride [(:Driver d) (:Vehicle v)]
-  (format (getf d :name) "rides" (getf v :name)))
+  (println (getf d :name) "rides" (getf v :name)))
 
 (def-method ride [(:AnimalDriver d) (:SimpleVehicle v)]
-  (format (getf d :name) "is smart and rides" (getf v :name)))
+  (println (getf d :name) "is smart and rides" (getf v :name)))
 
 (def-method ride [(:AnimalDriver d) (:Vehicle v)]
-  (format (getf d :name) "is not smart enough to ride" (getf v :name)))
+  (println (getf d :name) "is not smart enough to ride" (getf v :name)))
 
 (def-method ride [(:Driver d) (:FlyingVehicle v)]
-  (format (getf d :name) "requires special training to fly" (getf v :name)))
+  (println (getf d :name) "requires special training to fly" (getf v :name)))
 
 (def-method ride [(:Pilot d) (:FlyingVehicle v)]
-  (format (getf d :name) "flies on" (getf v :name)))
+  (println (getf d :name) "flies on" (getf v :name)))
 
 (def-support :before ride [(:Driver d) (:LandVehicle v)]
   (println "Fuel the tank"))
@@ -89,18 +89,18 @@
 (def il-86 (new-instance :Plane :name "Il-86"))
 
 (def monkey (new-instance :AnimalDriver :name "Monkey"))
-(def anonymos (new-instance :HumanDriver :name "Anonumous"))
+(def anonymous (new-instance :HumanDriver :name "Anonymous"))
 (def pirx (new-instance :Pilot :name "Pirx"))
 
 (defn -main []
   (println "-main")
 
-  (capabilities t-90)
+  (capabilities [t-90])
   
-  (ride monkey my-bicycle)
-  (ride monkey t-90)
-  (ride anonymous il-86)
-  (ride pirxil-86)
+  (ride [monkey my-bicycle])
+  (ride [monkey t-90])
+  (ride [anonymous il-86])
+  (ride [pirx il-86])
 ; Expected output:
 
 ; T-90 allows to:
