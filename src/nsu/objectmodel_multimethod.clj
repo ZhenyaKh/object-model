@@ -1,5 +1,13 @@
 (in-ns 'nsu.objectmodel)
 
+(defn inc-inds [sub_inds sub_max_inds]
+  (let [index (last sub_inds)
+        max_index (last sub_max_inds)]
+  (if (empty? sub_inds) '()
+    (if (< index  max_index)
+      (concat (drop-last sub_inds) [(inc index)])
+      (concat (self (drop-last sub_inds) (drop-last sub_max_inds)) [0])))))
+
 (defmacro def-generic
   "This macro declares a multimethod ~name."
   [name]
@@ -70,14 +78,7 @@
                     (let [graph (nth BFS_graphs i)
                           index (nth indices i)]
                       (recur (dec i) (conj classes (nth graph index))))))
-        max_inds (map #(dec (.size %)) BFS_graphs)
-        inc-inds (fn self [sub_inds sub_max_inds]
-                      (let [index (last sub_inds)
-                            max_index (last sub_max_inds)]
-                        (if (empty? sub_inds) '()
-                          (if (< index  max_index)
-                            (concat (drop-last sub_inds) [(inc index)])
-                            (concat (self (drop-last sub_inds) (drop-last sub_max_inds)) [0])))))]
+        max_inds (map #(dec (.size %)) BFS_graphs)]
     (if (contains? vtable classes)
       (let [eff_classes classes]
         (binding [call-next-method
