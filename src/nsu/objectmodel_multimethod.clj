@@ -102,13 +102,9 @@
   [aroundtable beforetable primarytable aftertable 
    BFS_graphs indices indices_to inds-changer objs & args]
   (let [classes (get-classes-from-graphs BFS_graphs indices)
-        graphs_number (.size BFS_graphs)]
-    (if (contains? @aroundtable classes)
-      (do ;(println "\ncontains classes\n")
-      (binding [call-next-method
-                (if (= indices indices_to) 
+        graphs_number (.size BFS_graphs)
+        before-primary-after 
                   (fn [& args1] 
-                    ;(println "\nbefore-command-after\n")
                     (when (not (empty? @beforetable))
                       (apply perform-effective-before-after (concat (list @beforetable BFS_graphs
                         (repeat graphs_number 0) indices_to inc-inds objs) args1)))
@@ -118,16 +114,20 @@
                     (when (not (empty? @aftertable))
                       (apply perform-effective-before-after (concat (list @aftertable BFS_graphs
                         indices_to indices_to dec-inds objs) args1)))
-                    result))
-                  (do ;(println "\nnext around is called\n") 
-                    (partial perform-effective-around 
-                             aroundtable beforetable primarytable aftertable BFS_graphs 
-                             (inds-changer indices indices_to) indices_to inds-changer objs)))]
-        (dosync (apply (aroundtable classes) (concat objs args)))))
-      (do ;(println "\nnot contains, next index\n") 
+                    result))]
+    (if (not (empty? @aroundtable))
+      (if (contains? @aroundtable classes)
+        (binding [call-next-method
+                  (if (= indices indices_to)
+                    before-primary-after
+                      (partial perform-effective-around 
+                               aroundtable beforetable primarytable aftertable BFS_graphs 
+                               (inds-changer indices indices_to) indices_to inds-changer objs))]
+          (dosync (apply (aroundtable classes) (concat objs args))))
         (apply perform-effective-around 
-               (concat (list aroundtable beforetable primarytable aftertable BFS_graphs
-               (inds-changer indices indices_to) indices_to inds-changer objs) args))))))
+                 (concat (list aroundtable beforetable primarytable aftertable BFS_graphs
+                 (inds-changer indices indices_to) indices_to inds-changer objs) args)))
+      (apply before-primary-after args))))
 
 
 
