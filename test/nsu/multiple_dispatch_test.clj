@@ -33,7 +33,7 @@
 (def e2 (new-instance :B2))
 (def e3 (new-instance :B3))
 
-(deftest test-3
+(deftest multiple-dispatch-combining
   (testing "test-3"
     (def s "")
     (ride [e1 e2 e3] "arg_1" "arg_2")
@@ -140,7 +140,7 @@
 (def inst1 (new-instance :pD))
 (def inst2 (new-instance :pH))
 
-(deftest test-4
+(deftest dispach-2-args
   (testing "test-4"
     (def s "")
     (ride [inst1 inst2] "arg_1" "arg_2")
