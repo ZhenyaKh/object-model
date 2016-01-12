@@ -43,6 +43,18 @@
 	(call-next-method)
 	(println "be driven by anyone"))
 
+(def-generic can-ride)
+	
+(def-method can-ride [(:Driver d) (:Vehicle v)] true)
+
+(def-method can-ride [(:AnimalDriver d) (:SimpleVehicle v)] true)
+
+(def-method can-ride [(:AnimalDriver d) (:Vehicle v)] false)
+   
+(def-method can-ride [(:Driver d) (:FlyingVehicle v)] false)
+
+(def-method can-ride [(:Pilot d) (:FlyingVehicle v)] true)
+  
 (def-generic ride)
 
 (def-method ride [(:Driver d) (:Vehicle v)]
@@ -86,7 +98,9 @@
 
 (def-support :around ride [(:Driver d) (:Vehicle v)]
   (println "Start observing the show")
-  (let [result (call-next-method)]
+  (let [result (if (can-ride [d v])
+                 (call-next-method)
+				 (println (getf d :name) "cannot ride on" (getf v :name)))]
     (println "Finish observing the show")
     result))
 
@@ -118,7 +132,6 @@
   (ride [anonymous il-86])
   (println)
   (ride [pirx il-86])
-  (println)
 
   (println "\nThe End"))
 
