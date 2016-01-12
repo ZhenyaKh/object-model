@@ -87,7 +87,7 @@
                     (inds-changer indices indices_to) indices_to inds-changer objs) args)))))
 
 (defn perform-effective-before-after
-  ;; TODO: some docs here.
+  "Performs before/after support methods contained in vtable. They can not be called explicitly."
   [vtable BFS_graphs indices indices_to inds-changer objs & args]
   (let [graphs_number (.size BFS_graphs)
         classes (get-classes-from-graphs BFS_graphs indices)]
@@ -98,7 +98,9 @@
                              (inds-changer indices indices_to) indices_to inds-changer objs) args)))))
 
 (defn perform-effective-around
-  ;; TODO: some docs here.
+  "Performs support around-methods contained in aroundtable.
+   Each next around-method can be called with (call-next-method).
+   When all the around-methods are performed primary-methods can be called with (call-next-method)."
   [aroundtable beforetable primarytable aftertable 
    BFS_graphs indices indices_to inds-changer objs & args]
   (let [classes (get-classes-from-graphs BFS_graphs indices)
@@ -132,7 +134,8 @@
 
 
 (defn get-classes-from-graphs
-  ;; TODO: some docs here.
+  "Gets a partiular set of classes from BFS_graphs corresponding to the indices vector.
+  Each index means a class position in a BFS-graph that is a hierarchy of classes."
   [BFS_graphs indices]
   (let [graphs_number (.size BFS_graphs)]
     (loop [i (dec graphs_number)
@@ -144,7 +147,8 @@
           (recur (dec i) (conj classes (nth graph index))))))))
 
 (defn inc-inds
-  ;; TODO: some docs here.
+  "Increments the indices vector. The min value of the vector is a vector of all nulls and the
+  max value is a vector each element of which is a number of classes in a hierarchy minus one."
   [sub_inds sub_max_inds]
   (let [index (last sub_inds)
         max_index (last sub_max_inds)]
@@ -154,7 +158,8 @@
         (concat (inc-inds (drop-last sub_inds) (drop-last sub_max_inds)) [0])))))
 
 (defn dec-inds
-  ;; TODO: some docs here.
+  "Decrements the indices vector. The min value of the vector is a vector of all nulls and the
+  max value is a vector each element of which is a number of classes in a hierarchy minus one."
   [sub_inds sub_max_inds]
   (let [index (last sub_inds)
         max_index (last sub_max_inds)]
