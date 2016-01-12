@@ -84,6 +84,18 @@
 (def-support :after ride [(:Driver d) (:Armour v)]
   (println "Leave vehicle without hurts"))
 
+(def-support :around ride [(:Driver d) (:Vehicle v)]
+  (println "Start observing the show")
+  (let [result (call-next-method)]
+    (println "Finish observing the show")
+    result))
+
+(def-support :around ride [(:AnimalDriver d) (:SimpleVehicle v)]
+  (println "Allow" (getf d :name) "to ride")
+  (let [result (call-next-method)]
+    (println "We allowed" (getf d :name) "to ride and it was all okay")
+    result))
+
 (def t-90 (new-instance :Armour :name "T-90"))
 (def my-bicycle (new-instance :Bicycle :name "My bicycle"))
 (def il-86 (new-instance :Plane :name "Il-86"))
@@ -94,7 +106,8 @@
 
 (defn -main []
   (println "-main")
-
+  (println)
+  
   (capabilities [t-90])
   (println)
   
@@ -106,16 +119,6 @@
   (println)
   (ride [pirx il-86])
   (println)
-; Expected output:
-
-; T-90 allows to:
-; move on land
-; sail
-;
-; Monkey is smart and rides Bicycle
-; Monkey is not smart enough to ride T-90
-; Anonymous requires special training to fly Il-86
-; Pirxflies on Il-86
 
   (println "\nThe End"))
 
