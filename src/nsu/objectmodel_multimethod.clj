@@ -122,13 +122,15 @@
         (binding [call-next-method
                   (if (= indices indices_to)
                     before-primary-after
-                      (partial perform-effective-around 
-                               aroundtable beforetable primarytable aftertable BFS_graphs 
-                               (inds-changer indices indices_to) indices_to inds-changer objs))]
+                    (partial perform-effective-around
+                       aroundtable beforetable primarytable aftertable BFS_graphs
+                         (inds-changer indices indices_to) indices_to inds-changer objs))]
           (dosync (apply (aroundtable classes) (concat objs args))))
-        (apply perform-effective-around 
-                 (concat (list aroundtable beforetable primarytable aftertable BFS_graphs
-                 (inds-changer indices indices_to) indices_to inds-changer objs) args)))
+        (if (= indices indices_to)
+          (apply before-primary-after args)
+          (apply perform-effective-around
+              (concat (list aroundtable beforetable primarytable aftertable BFS_graphs
+                  (inds-changer indices indices_to) indices_to inds-changer objs) args))))
       (apply before-primary-after args))))
 
 
